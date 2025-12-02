@@ -1,65 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase, Department, Profile } from '../lib/supabase';
 import DepartmentView from './admin/DepartmentView';
 
 export default function AdminDashboard() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, departments, profiles, createDepartment } = useAuth();
   const [view, setView] = useState<'overview' | 'department'>('overview');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [lecturers, setLecturers] = useState<Profile[]>([]);
-  const [students, setStudents] = useState<Profile[]>([]);
   const [showCreateDept, setShowCreateDept] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');
   const [newDeptCode, setNewDeptCode] = useState('');
   const [newDeptDesc, setNewDeptDesc] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    const { data: depts } = await supabase
-      .from('departments')
-      .select('*')
-      .order('name');
-
-    const { data: lects } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'lecturer')
-      .order('full_name');
-
-    const { data: studs } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'student')
-      .order('full_name');
-
-    if (depts) setDepartments(depts);
-    if (lects) setLecturers(lects);
-    if (studs) setStudents(studs);
-  };
+  const lecturers = profiles.filter(p => p.role === 'lecturer');
+  const students = profiles.filter(p => p.role === 'student');
 
   const handleCreateDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase
-      .from('departments')
-      .insert({
-        name: newDeptName,
-        code: newDeptCode,
-        description: newDeptDesc,
-        created_by: profile?.id,
-      });
+    const { error } = await createDepartment(newDeptName, newDeptCode, newDeptDesc);
 
     if (!error) {
       setShowCreateDept(false);
       setNewDeptName('');
       setNewDeptCode('');
       setNewDeptDesc('');
-      loadData();
     }
   };
 
@@ -75,7 +39,6 @@ export default function AdminDashboard() {
         onBack={() => {
           setView('overview');
           setSelectedDepartmentId(null);
-          loadData();
         }}
       />
     );

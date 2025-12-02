@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { supabase, Module, Department } from '../lib/supabase';
+import { useState } from 'react';
+import { useAuth, Module, Department } from '../context/AuthContext';
 
 type ModuleWithDepartment = Module & {
   department: Department;
@@ -8,66 +7,41 @@ type ModuleWithDepartment = Module & {
 };
 
 export default function StudentDashboard() {
-  const { profile, signOut } = useAuth();
-  const [modules, setModules] = useState<ModuleWithDepartment[]>([]);
-  const [enrolledModules, setEnrolledModules] = useState<ModuleWithDepartment[]>([]);
-  const [userDepartmentId, setUserDepartmentId] = useState<string | null>(null);
+  const { profile, signOut, userDepartments, departments, modules, enrollments, enrollStudent } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (profile) {
-      loadStudentData();
-    }
-  }, [profile]);
+  if (!profile) return null;
 
-  const loadStudentData = async () => {
-    if (!profile) return;
+  // Get student's department
+  const studentDept = userDepartments.find(ud => ud.user_id === profile.id);
+  const userDepartmentId = studentDept?.department_id;
 
-    const { data: userDept } = await supabase
-      .from('user_departments')
-      .select('department_id')
-      .eq('user_id', profile.id)
-      .maybeSingle();
+  // Get modules in student's department
+  const departmentModules = modules.filter(m => m.department_id === userDepartmentId);
+  
+  // Get student's enrollments
+  const studentEnrollments = enrollments.filter(e => e.student_id === profile.id);
+  const enrolledModuleIds = new Set(studentEnrollments.map(e => e.module_id));
 
-    if (!userDept) return;
+  // Separate enrolled and available modules
+  const modsWithDepartment: ModuleWithDepartment[] = departmentModules.map(mod => {
+    const dept = departments.find(d => d.id === mod.department_id)!;
+    return {
+      ...mod,
+      department: dept,
+      is_enrolled: enrolledModuleIds.has(mod.id)
+    };
+  });
 
-    setUserDepartmentId(userDept.department_id);
-
-    const { data: mods } = await supabase
-      .from('modules')
-      .select(`
-        *,
-        department:departments(*)
-      `)
-      .eq('department_id', userDept.department_id)
-      .order('name');
-
-    const { data: enrollments } = await supabase
-      .from('enrollments')
-      .select('module_id')
-      .eq('student_id', profile.id);
-
-    const enrolledModuleIds = new Set(enrollments?.map((e) => e.module_id) || []);
-
-    if (mods) {
-      const modsWithEnrollment = mods.map((mod: any) => ({
-        ...mod,
-        department: mod.department,
-        is_enrolled: enrolledModuleIds.has(mod.id),
-      }));
-
-      setModules(modsWithEnrollment.filter((m) => !m.is_enrolled));
-      setEnrolledModules(modsWithEnrollment.filter((m) => m.is_enrolled));
-    }
-  };
+  const enrolledModules = modsWithDepartment.filter(m => m.is_enrolled);
+  const availableModules = modsWithDepartment.filter(m => !m.is_enrolled);
 
   const handleEnroll = async (moduleId: string) => {
     if (!profile) return;
 
     setLoading(true);
 
-    const module = modules.find((m) => m.id === moduleId);
-
+    const module = availableModules.find((m) => m.id === moduleId);
     if (!module) {
       setLoading(false);
       return;
@@ -79,30 +53,13 @@ export default function StudentDashboard() {
       return;
     }
 
-    const { error: enrollError } = await supabase
-      .from('enrollments')
-      .insert({
-        student_id: profile.id,
-        module_id: moduleId,
-      });
+    const { error } = await enrollStudent(profile.id, moduleId);
 
-    if (enrollError) {
-      alert('Failed to enroll: ' + enrollError.message);
-      setLoading(false);
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from('modules')
-      .update({ current_students: module.current_students + 1 })
-      .eq('id', moduleId);
-
-    if (updateError) {
-      console.error('Failed to update module count:', updateError);
+    if (error) {
+      alert('Failed to enroll: ' + error.message);
     }
 
     setLoading(false);
-    loadStudentData();
   };
 
   return (
@@ -167,7 +124,7 @@ export default function StudentDashboard() {
             </div>
           ) : (
             <div className="space-y-3">
-              {modules.map((mod) => {
+              {availableModules.map((mod) => {
                 const isFull = mod.current_students >= mod.max_students;
 
                 return (

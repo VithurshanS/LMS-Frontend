@@ -1,69 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase, Module } from '../lib/supabase';
 
-type ModuleWithEnrollments = Module & {
+type ModuleWithEnrollments = {
+  id: string;
+  department_id: string;
+  code: string;
+  name: string;
+  description?: string;
+  max_students: number;
+  current_students: number;
+  lecturer_id: string | null;
+  created_at: string;
   enrollment_count: number;
 };
 
 export default function LecturerDashboard() {
-  const { profile, signOut } = useAuth();
-  const [modules, setModules] = useState<ModuleWithEnrollments[]>([]);
+  const { profile, signOut, getLecturerModules, getModuleEnrollments } = useAuth();
   const [selectedModule, setSelectedModule] = useState<ModuleWithEnrollments | null>(null);
   const [enrolledStudents, setEnrolledStudents] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (profile) {
-      loadModules();
-    }
-  }, [profile]);
+  const lecturerModules = profile ? getLecturerModules(profile.id) : [];
+  const modules: ModuleWithEnrollments[] = lecturerModules.map(mod => {
+    const enrollments = getModuleEnrollments(mod.id);
+    return { ...mod, enrollment_count: enrollments.length };
+  });
 
-  const loadModules = async () => {
-    if (!profile) return;
-
-    const { data: mods } = await supabase
-      .from('modules')
-      .select('*')
-      .eq('lecturer_id', profile.id)
-      .order('name');
-
-    if (mods) {
-      const modsWithCount = await Promise.all(
-        mods.map(async (mod) => {
-          const { count } = await supabase
-            .from('enrollments')
-            .select('*', { count: 'exact', head: true })
-            .eq('module_id', mod.id);
-
-          return { ...mod, enrollment_count: count || 0 };
-        })
-      );
-
-      setModules(modsWithCount);
-    }
-  };
-
-  const handleModuleClick = async (mod: ModuleWithEnrollments) => {
+  const handleModuleClick = (mod: ModuleWithEnrollments) => {
     setSelectedModule(mod);
-
-    const { data: enrollments } = await supabase
-      .from('enrollments')
-      .select(`
-        id,
-        enrolled_at,
-        student_id,
-        profiles!enrollments_student_id_fkey (
-          id,
-          full_name,
-          email
-        )
-      `)
-      .eq('module_id', mod.id)
-      .order('enrolled_at', { ascending: false });
-
-    if (enrollments) {
-      setEnrolledStudents(enrollments);
-    }
+    const enrollments = getModuleEnrollments(mod.id);
+    setEnrolledStudents(enrollments.map(item => ({
+      id: item.enrollment.id,
+      enrolled_at: item.enrollment.enrolled_at,
+      profiles: item.student
+    })));
   };
 
   if (selectedModule) {

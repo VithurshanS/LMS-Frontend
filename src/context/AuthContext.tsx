@@ -1,131 +1,174 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase, Profile } from '../lib/supabase';
+import { createContext, useContext, useState, ReactNode } from 'react';
+import { User, Module, Department, Enrollment, Role } from '../types';
+import { 
+  departments as initialDepartments, 
+  users as initialUsers, 
+  modules as initialModules, 
+  enrollments as initialEnrollments 
+} from '../data/mockData';
 
-type AuthContextType = {
-  user: User | null;
-  profile: Profile | null;
-  loading: boolean;
-  signUp: (email: string, password: string, fullName: string, role: string, departmentId?: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
-};
+interface AuthContextType {
+  currentUser: User | null;
+  users: User[];
+  departments: Department[];
+  modules: Module[];
+  enrollments: Enrollment[];
+  login: (username: string, role: Role) => boolean;
+  logout: () => void;
+  register: (userData: Omit<User, 'id' | 'isActive'>) => void;
+  approveLecturer: (userId: string) => void;
+  enrollInModule: (studentId: string, moduleId: string) => boolean;
+  getDepartmentModules: (departmentId: string) => Module[];
+  getDepartmentLecturers: (departmentId: string) => User[];
+  getStudentEnrollments: (studentId: string) => Enrollment[];
+  getLecturerModules: (lecturerId: string) => Module[];
+  isStudentEnrolled: (studentId: string, moduleId: string) => boolean;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [departments] = useState<Department[]>(initialDepartments);
+  const [modules, setModules] = useState<Module[]>(initialModules);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>(initialEnrollments);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await loadProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setLoading(false);
-        }
-      })();
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (!error && data) {
-      setProfile(data);
+  const login = (username: string, role: Role): boolean => {
+    const user = users.find(u => u.username === username && u.role === role);
+    
+    if (!user) {
+      alert('Invalid username or role');
+      return false;
     }
-    setLoading(false);
+
+    // Check if lecturer is active
+    if (user.role === 'LECTURER' && !user.isActive) {
+      alert('Account pending approval.');
+      return false;
+    }
+
+    setCurrentUser(user);
+    return true;
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role: string, departmentId?: string) => {
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+  const logout = () => {
+    setCurrentUser(null);
+  };
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('No user returned');
+  const register = (userData: Omit<User, 'id' | 'isActive'>) => {
+    const newUser: User = {
+      ...userData,
+      id: `u${Date.now()}`,
+      // Lecturers are inactive by default, students are active
+      isActive: userData.role !== 'LECTURER',
+    };
 
-      const isApproved = role === 'admin' || role === 'student';
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
-          email,
-          full_name: fullName,
-          role,
-          is_approved: isApproved,
-        });
-
-      if (profileError) throw profileError;
-
-      if (departmentId && (role === 'lecturer' || role === 'student')) {
-        const { error: deptError } = await supabase
-          .from('user_departments')
-          .insert({
-            user_id: authData.user.id,
-            department_id: departmentId,
-          });
-
-        if (deptError) throw deptError;
-      }
-
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
+    setUsers(prev => [...prev, newUser]);
+    
+    // Auto-login if student or admin
+    if (newUser.isActive) {
+      setCurrentUser(newUser);
+    } else {
+      alert('Registration successful! Your account is pending approval.');
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
+  const approveLecturer = (userId: string) => {
+    setUsers(prev =>
+      prev.map(user =>
+        user.id === userId ? { ...user, isActive: true } : user
+      )
+    );
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const enrollInModule = (studentId: string, moduleId: string): boolean => {
+    const module = modules.find(m => m.id === moduleId);
+    
+    if (!module) {
+      alert('Module not found');
+      return false;
+    }
+
+    if (module.enrolledCount >= module.limit) {
+      alert('Module is full');
+      return false;
+    }
+
+    if (isStudentEnrolled(studentId, moduleId)) {
+      alert('Already enrolled in this module');
+      return false;
+    }
+
+    // Create enrollment
+    const newEnrollment: Enrollment = {
+      id: `e${Date.now()}`,
+      studentId,
+      moduleId,
+      enrolledAt: new Date().toISOString(),
+    };
+
+    setEnrollments(prev => [...prev, newEnrollment]);
+    
+    // Increment module enrolled count
+    setModules(prev =>
+      prev.map(m =>
+        m.id === moduleId ? { ...m, enrolledCount: m.enrolledCount + 1 } : m
+      )
+    );
+
+    return true;
+  };
+
+  const getDepartmentModules = (departmentId: string): Module[] => {
+    return modules.filter(m => m.departmentId === departmentId);
+  };
+
+  const getDepartmentLecturers = (departmentId: string): User[] => {
+    return users.filter(u => u.role === 'LECTURER' && u.departmentId === departmentId);
+  };
+
+  const getStudentEnrollments = (studentId: string): Enrollment[] => {
+    return enrollments.filter(e => e.studentId === studentId);
+  };
+
+  const getLecturerModules = (lecturerId: string): Module[] => {
+    return modules.filter(m => m.lecturerId === lecturerId);
+  };
+
+  const isStudentEnrolled = (studentId: string, moduleId: string): boolean => {
+    return enrollments.some(e => e.studentId === studentId && e.moduleId === moduleId);
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        currentUser,
+        users,
+        departments,
+        modules,
+        enrollments,
+        login,
+        logout,
+        register,
+        approveLecturer,
+        enrollInModule,
+        getDepartmentModules,
+        getDepartmentLecturers,
+        getStudentEnrollments,
+        getLecturerModules,
+        isStudentEnrolled,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};

@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase, Department } from '../lib/supabase';
 
 type RegisterFormProps = {
   onBack: () => void;
@@ -8,33 +7,21 @@ type RegisterFormProps = {
 };
 
 export default function RegisterForm({ onBack, onSuccess }: RegisterFormProps) {
-  const { signUp } = useAuth();
+  const { signUp, departments } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'student' | 'lecturer'>('student');
   const [departmentId, setDepartmentId] = useState('');
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadDepartments();
-  }, []);
-
-  const loadDepartments = async () => {
-    const { data } = await supabase
-      .from('departments')
-      .select('*')
-      .order('name');
-
-    if (data) {
-      setDepartments(data);
-      if (data.length > 0) {
-        setDepartmentId(data[0].id);
-      }
+  // Set default department when departments are available
+  useState(() => {
+    if (departments.length > 0 && !departmentId) {
+      setDepartmentId(departments[0].id);
     }
-  };
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
