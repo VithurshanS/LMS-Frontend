@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ModuleCard from '../components/ModuleCard';
+import EmptyState from '../components/EmptyState';
 
 export default function StudentDashboard() {
   const { currentUser, logout, enrollments, enrollInModule, getDepartmentModules } = useAuth();
@@ -68,21 +70,21 @@ export default function StudentDashboard() {
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">My Enrolled Modules</h2>
           {enrolledModules.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p className="text-gray-600">You haven't enrolled in any modules yet.</p>
-            </div>
+            <EmptyState message="You haven't enrolled in any modules yet." />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {enrolledModules.map(module => (
-                <div key={module.id} className="bg-white rounded-lg shadow-md p-6">
-                  <div className="mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900">{module.name}</h3>
-                    <p className="text-sm text-gray-600">{module.code}</p>
-                  </div>
-                  <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
-                    Enrolled
-                  </span>
-                </div>
+                <ModuleCard
+                  key={module.id}
+                  module={module}
+                  showLecturer={false}
+                  showProgress={false}
+                  actionButton={
+                    <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full w-full text-center">
+                      ✓ Enrolled
+                    </span>
+                  }
+                />
               ))}
             </div>
           )}
@@ -92,9 +94,7 @@ export default function StudentDashboard() {
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Modules</h2>
           {availableModules.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p className="text-gray-600">No more modules available for enrollment.</p>
-            </div>
+            <EmptyState message="No more modules available for enrollment." />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {availableModules.map(module => {
@@ -102,37 +102,26 @@ export default function StudentDashboard() {
                 const isEnrolling = enrolling === module.id;
                 
                 return (
-                  <div key={module.id} className="bg-white rounded-lg shadow-md p-6">
-                    <div className="mb-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{module.name}</h3>
-                          <p className="text-sm text-gray-600">{module.code}</p>
-                        </div>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                        }`}>
-                          {isFull ? 'Full' : 'Open'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        Capacity: {module.enrolledCount}/{module.limit}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleEnroll(module.id)}
-                      disabled={isFull || isEnrolling}
-                      className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-                        isFull
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : isEnrolling
-                          ? 'bg-blue-400 text-white cursor-wait'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
-                      }`}
-                    >
-                      {isEnrolling ? 'Enrolling...' : isFull ? 'Module Full' : 'Enroll'}
-                    </button>
-                  </div>
+                  <ModuleCard
+                    key={module.id}
+                    module={module}
+                    showLecturer={false}
+                    actionButton={
+                      <button
+                        onClick={() => handleEnroll(module.id)}
+                        disabled={isFull || isEnrolling}
+                        className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+                          isFull
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : isEnrolling
+                            ? 'bg-blue-400 text-white cursor-wait'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {isEnrolling ? 'Enrolling...' : isFull ? 'Module Full' : 'Enroll'}
+                      </button>
+                    }
+                  />
                 );
               })}
             </div>

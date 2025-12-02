@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ModuleCard from '../components/ModuleCard';
+import EmptyState from '../components/EmptyState';
 
 export default function LecturerDashboard() {
   const { currentUser, logout, modules, departments } = useAuth();
@@ -79,58 +81,16 @@ export default function LecturerDashboard() {
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">My Modules</h2>
           {lecturerModules.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p className="text-gray-600">You have no assigned modules yet.</p>
-            </div>
+            <EmptyState message="You have no assigned modules yet." />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lecturerModules.map(module => {
-                const isFull = module.enrolledCount >= module.limit;
-                const capacity = `${module.enrolledCount}/${module.limit}`;
-                
-                return (
-                  <div key={module.id} className="bg-white rounded-lg shadow-md p-6">
-                    <div className="mb-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{module.name}</h3>
-                          <p className="text-sm text-gray-600">{module.code}</p>
-                        </div>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                        }`}>
-                          {isFull ? 'Full' : 'Open'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex justify-between">
-                        <span>Enrolled Students:</span>
-                        <span className="font-medium text-gray-900">{module.enrolledCount}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Capacity:</span>
-                        <span className="font-medium text-gray-900">{capacity}</span>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="mt-4">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            isFull ? 'bg-red-600' : 'bg-green-600'
-                          }`}
-                          style={{
-                            width: `${Math.min((module.enrolledCount / module.limit) * 100, 100)}%`
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {lecturerModules.map(module => (
+                <ModuleCard
+                  key={module.id}
+                  module={module}
+                  showLecturer={false}
+                />
+              ))}
             </div>
           )}
         </section>

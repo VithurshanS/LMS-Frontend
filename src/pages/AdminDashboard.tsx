@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ModuleCard from '../components/ModuleCard';
+import Modal from '../components/Modal';
+import EmptyState from '../components/EmptyState';
+import ModuleDetailModal from '../components/ModuleDetailModal';
+import { Module } from '../types';
 
 type TabType = 'departments' | 'lecturers' | 'students';
 
@@ -12,6 +17,8 @@ export default function AdminDashboard() {
   const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
   const [showUserDetailModal, setShowUserDetailModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<typeof users[0] | null>(null);
+  const [showModuleDetailModal, setShowModuleDetailModal] = useState(false);
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [newDepartmentName, setNewDepartmentName] = useState('');
   const [newModuleData, setNewModuleData] = useState({
     code: '',
@@ -79,6 +86,11 @@ export default function AdminDashboard() {
   const handleUserClick = (user: typeof users[0]) => {
     setSelectedUser(user);
     setShowUserDetailModal(true);
+  };
+
+  const handleModuleClick = (module: Module) => {
+    setSelectedModule(module);
+    setShowModuleDetailModal(true);
   };
 
   const getUserModules = (user: typeof users[0]) => {
@@ -189,36 +201,24 @@ export default function AdminDashboard() {
                 {/* Modules in Department */}
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Modules</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {departmentModules.map(module => {
-                      const lecturer = users.find(u => u.id === module.lecturerId);
-                      const isFull = module.enrolledCount >= module.limit;
-                      
-                      return (
-                        <div key={module.id} className="bg-white rounded-lg shadow p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h4 className="font-semibold text-gray-900">{module.name}</h4>
-                              <p className="text-sm text-gray-600">{module.code}</p>
-                            </div>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                            }`}>
-                              {isFull ? 'Full' : 'Open'}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            Capacity: {module.enrolledCount}/{module.limit}
-                          </p>
-                          {lecturer && (
-                            <p className="text-sm text-gray-500">
-                              Lecturer: {lecturer.firstName} {lecturer.lastName}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {departmentModules.length === 0 ? (
+                    <EmptyState message="No modules in this department yet" />
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {departmentModules.map(module => {
+                        const lecturer = users.find(u => u.id === module.lecturerId);
+                        
+                        return (
+                          <ModuleCard
+                            key={module.id}
+                            module={module}
+                            lecturer={lecturer}
+                            onClick={() => handleModuleClick(module)}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Lecturers in Department */}
@@ -394,125 +394,146 @@ export default function AdminDashboard() {
       </main>
 
       {/* Create Department Modal */}
-      {showCreateDepartmentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Add New Department</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Department Name
-              </label>
-              <input
-                type="text"
-                value={newDepartmentName}
-                onChange={(e) => setNewDepartmentName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., Physics"
-              />
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={handleCreateDepartment}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Create
-              </button>
-              <button
-                onClick={() => {
-                  setShowCreateDepartmentModal(false);
-                  setNewDepartmentName('');
-                }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+      <Modal
+        isOpen={showCreateDepartmentModal}
+        onClose={() => {
+          setShowCreateDepartmentModal(false);
+          setNewDepartmentName('');
+        }}
+        title="Add New Department"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Department Name
+            </label>
+            <input
+              type="text"
+              value={newDepartmentName}
+              onChange={(e) => setNewDepartmentName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., Physics"
+            />
+          </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={handleCreateDepartment}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Create
+            </button>
+            <button
+              onClick={() => {
+                setShowCreateDepartmentModal(false);
+                setNewDepartmentName('');
+              }}
+              className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Create Module Modal */}
-      {showCreateModuleModal && selectedDepartment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              Add Module to {selectedDepartment.name}
-            </h3>
-            <div className="space-y-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Module Code
-                </label>
-                <input
-                  type="text"
-                  value={newModuleData.code}
-                  onChange={(e) => setNewModuleData({ ...newModuleData, code: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., CS301"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Module Name
-                </label>
-                <input
-                  type="text"
-                  value={newModuleData.name}
-                  onChange={(e) => setNewModuleData({ ...newModuleData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Advanced Programming"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assign Lecturer
-                </label>
-                <select
-                  value={newModuleData.lecturerId}
-                  onChange={(e) => setNewModuleData({ ...newModuleData, lecturerId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select a lecturer</option>
-                  {departmentLecturers.filter(l => l.isActive).map(lecturer => (
-                    <option key={lecturer.id} value={lecturer.id}>
-                      {lecturer.firstName} {lecturer.lastName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Student Limit
-                </label>
-                <input
-                  type="number"
-                  value={newModuleData.limit}
-                  onChange={(e) => setNewModuleData({ ...newModuleData, limit: parseInt(e.target.value) || 30 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  min="1"
-                  max="100"
-                />
-              </div>
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={handleCreateModule}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Create Module
-              </button>
-              <button
-                onClick={() => {
-                  setShowCreateModuleModal(false);
-                  setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
-                }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+      <Modal
+        isOpen={showCreateModuleModal && !!selectedDepartment}
+        onClose={() => {
+          setShowCreateModuleModal(false);
+          setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
+        }}
+        title={`Add Module to ${selectedDepartment?.name || ''}`}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Module Code
+            </label>
+            <input
+              type="text"
+              value={newModuleData.code}
+              onChange={(e) => setNewModuleData({ ...newModuleData, code: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., CS301"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Module Name
+            </label>
+            <input
+              type="text"
+              value={newModuleData.name}
+              onChange={(e) => setNewModuleData({ ...newModuleData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., Advanced Programming"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Assign Lecturer
+            </label>
+            <select
+              value={newModuleData.lecturerId}
+              onChange={(e) => setNewModuleData({ ...newModuleData, lecturerId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select a lecturer</option>
+              {departmentLecturers.filter(l => l.isActive).map(lecturer => (
+                <option key={lecturer.id} value={lecturer.id}>
+                  {lecturer.firstName} {lecturer.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Student Limit
+            </label>
+            <input
+              type="number"
+              value={newModuleData.limit}
+              onChange={(e) => setNewModuleData({ ...newModuleData, limit: parseInt(e.target.value) || 30 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              min="1"
+              max="100"
+            />
+          </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={handleCreateModule}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Create Module
+            </button>
+            <button
+              onClick={() => {
+                setShowCreateModuleModal(false);
+                setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
+              }}
+              className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Module Detail Modal */}
+      {selectedModule && (
+        <ModuleDetailModal
+          isOpen={showModuleDetailModal}
+          onClose={() => {
+            setShowModuleDetailModal(false);
+            setSelectedModule(null);
+          }}
+          module={selectedModule}
+          lecturer={users.find(u => u.id === selectedModule.lecturerId)}
+          department={departments.find(d => d.id === selectedModule.departmentId)}
+          enrolledStudents={users.filter(u => 
+            enrollments.some(e => e.moduleId === selectedModule.id && e.studentId === u.id)
+          )}
+        />
       )}
       
       {/* User Detail Modal */}
