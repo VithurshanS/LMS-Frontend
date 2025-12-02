@@ -23,6 +23,9 @@ interface AuthContextType {
   getStudentEnrollments: (studentId: string) => Enrollment[];
   getLecturerModules: (lecturerId: string) => Module[];
   isStudentEnrolled: (studentId: string, moduleId: string) => boolean;
+  createDepartment: (name: string) => Department;
+  createModule: (moduleData: { code: string; name: string; departmentId: string; lecturerId: string; limit: number }) => Module;
+  assignLecturer: (moduleId: string, lecturerId: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,7 +33,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(initialUsers);
-  const [departments] = useState<Department[]>(initialDepartments);
+  const [departments, setDepartments] = useState<Department[]>(initialDepartments);
   const [modules, setModules] = useState<Module[]>(initialModules);
   const [enrollments, setEnrollments] = useState<Enrollment[]>(initialEnrollments);
 
@@ -128,6 +131,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return users.filter(u => u.role === 'LECTURER' && u.departmentId === departmentId);
   };
 
+  const createDepartment = (name: string): Department => {
+    const newDepartment: Department = {
+      id: `dept_${Date.now()}`,
+      name
+    };
+    setDepartments([...departments, newDepartment]);
+    return newDepartment;
+  };
+
+  const createModule = (moduleData: { code: string; name: string; departmentId: string; lecturerId: string; limit: number }): Module => {
+    const newModule: Module = {
+      id: `m_${Date.now()}`,
+      code: moduleData.code,
+      name: moduleData.name,
+      departmentId: moduleData.departmentId,
+      lecturerId: moduleData.lecturerId,
+      limit: moduleData.limit,
+      enrolledCount: 0
+    };
+    setModules([...modules, newModule]);
+    return newModule;
+  };
+
+  const assignLecturer = (moduleId: string, lecturerId: string): boolean => {
+    const moduleIndex = modules.findIndex(m => m.id === moduleId);
+    if (moduleIndex === -1) return false;
+
+    const updatedModules = [...modules];
+    updatedModules[moduleIndex] = { ...updatedModules[moduleIndex], lecturerId };
+    setModules(updatedModules);
+    return true;
+  };
+
   const getStudentEnrollments = (studentId: string): Enrollment[] => {
     return enrollments.filter(e => e.studentId === studentId);
   };
@@ -158,6 +194,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         getStudentEnrollments,
         getLecturerModules,
         isStudentEnrolled,
+        createDepartment,
+        createModule,
+        assignLecturer,
       }}
     >
       {children}

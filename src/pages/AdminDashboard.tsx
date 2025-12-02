@@ -5,9 +5,18 @@ import { useAuth } from '../context/AuthContext';
 type TabType = 'departments' | 'lecturers' | 'students';
 
 export default function AdminDashboard() {
-  const { currentUser, logout, departments, users, approveLecturer, getDepartmentModules, getDepartmentLecturers } = useAuth();
+  const { currentUser, logout, departments, users, approveLecturer, getDepartmentModules, getDepartmentLecturers, createDepartment, createModule } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('departments');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+  const [showCreateDepartmentModal, setShowCreateDepartmentModal] = useState(false);
+  const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
+  const [newDepartmentName, setNewDepartmentName] = useState('');
+  const [newModuleData, setNewModuleData] = useState({
+    code: '',
+    name: '',
+    lecturerId: '',
+    limit: 30
+  });
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -34,6 +43,36 @@ export default function AdminDashboard() {
   const departmentLecturers = selectedDepartmentId
     ? getDepartmentLecturers(selectedDepartmentId)
     : [];
+
+  const handleCreateDepartment = () => {
+    if (!newDepartmentName.trim()) {
+      alert('Department name is required');
+      return;
+    }
+    createDepartment(newDepartmentName.trim());
+    setNewDepartmentName('');
+    setShowCreateDepartmentModal(false);
+  };
+
+  const handleCreateModule = () => {
+    if (!selectedDepartmentId) return;
+    
+    if (!newModuleData.code.trim() || !newModuleData.name.trim() || !newModuleData.lecturerId) {
+      alert('All fields are required');
+      return;
+    }
+
+    createModule({
+      code: newModuleData.code.trim(),
+      name: newModuleData.name.trim(),
+      departmentId: selectedDepartmentId,
+      lecturerId: newModuleData.lecturerId,
+      limit: newModuleData.limit
+    });
+
+    setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
+    setShowCreateModuleModal(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,7 +157,15 @@ export default function AdminDashboard() {
                   ← Back to Departments
                 </button>
                 
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">{selectedDepartment.name}</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedDepartment.name}</h2>
+                  <button
+                    onClick={() => setShowCreateModuleModal(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    + Add Module
+                  </button>
+                </div>
 
                 {/* Modules in Department */}
                 <div className="mb-8">
@@ -192,7 +239,15 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Departments</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Departments</h2>
+                  <button
+                    onClick={() => setShowCreateDepartmentModal(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    + Add Department
+                  </button>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {departments.map(dept => {
                     const deptModules = getDepartmentModules(dept.id);
@@ -315,6 +370,128 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Create Department Modal */}
+      {showCreateDepartmentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Add New Department</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department Name
+              </label>
+              <input
+                type="text"
+                value={newDepartmentName}
+                onChange={(e) => setNewDepartmentName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., Physics"
+              />
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleCreateDepartment}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Create
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreateDepartmentModal(false);
+                  setNewDepartmentName('');
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Module Modal */}
+      {showCreateModuleModal && selectedDepartment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Add Module to {selectedDepartment.name}
+            </h3>
+            <div className="space-y-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Module Code
+                </label>
+                <input
+                  type="text"
+                  value={newModuleData.code}
+                  onChange={(e) => setNewModuleData({ ...newModuleData, code: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., CS301"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Module Name
+                </label>
+                <input
+                  type="text"
+                  value={newModuleData.name}
+                  onChange={(e) => setNewModuleData({ ...newModuleData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Advanced Programming"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assign Lecturer
+                </label>
+                <select
+                  value={newModuleData.lecturerId}
+                  onChange={(e) => setNewModuleData({ ...newModuleData, lecturerId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a lecturer</option>
+                  {departmentLecturers.filter(l => l.isActive).map(lecturer => (
+                    <option key={lecturer.id} value={lecturer.id}>
+                      {lecturer.firstName} {lecturer.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Student Limit
+                </label>
+                <input
+                  type="number"
+                  value={newModuleData.limit}
+                  onChange={(e) => setNewModuleData({ ...newModuleData, limit: parseInt(e.target.value) || 30 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  min="1"
+                  max="100"
+                />
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleCreateModule}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Create Module
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreateModuleModal(false);
+                  setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
