@@ -26,13 +26,11 @@ export default function RegisterPage() {
 
     register(formData);
     
-    // If student or admin, redirect to appropriate dashboard
     if (formData.role === 'STUDENT') {
       navigate('/student');
     } else if (formData.role === 'ADMIN') {
       navigate('/admin');
     } else {
-      // Lecturer - redirect to login since they need approval
       navigate('/login');
     }
   };

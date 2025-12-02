@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
 
-    // Check if lecturer is active
     if (user.role === 'LECTURER' && !user.isActive) {
       alert('Account pending approval.');
       return false;
@@ -69,7 +68,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setUsers(prev => [...prev, newUser]);
     
-    // Auto-login if student or admin
     if (newUser.isActive) {
       setCurrentUser(newUser);
     } else {
@@ -103,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
 
-    // Create enrollment
+
     const newEnrollment: Enrollment = {
       id: `e${Date.now()}`,
       studentId,
@@ -113,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setEnrollments(prev => [...prev, newEnrollment]);
     
-    // Increment module enrolled count
+
     setModules(prev =>
       prev.map(m =>
         m.id === moduleId ? { ...m, enrolledCount: m.enrolledCount + 1 } : m

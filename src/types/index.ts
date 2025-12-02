@@ -20,12 +20,12 @@ export interface User {
 
 export interface Module {
   id: string;
-  code: string;         // e.g., "CS101"
+  code: string;       
   name: string;
-  limit: number;        // Max student capacity
-  enrolledCount: number; // Current number of enrolled students
+  limit: number;       
+  enrolledCount: number; 
   departmentId: string;
-  lecturerId?: string | null; // Module might not have a lecturer assigned yet
+  lecturerId?: string | null; 
 }
 
 export interface Enrollment {

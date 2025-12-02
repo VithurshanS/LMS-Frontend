@@ -5,11 +5,13 @@ import { useAuth } from '../context/AuthContext';
 type TabType = 'departments' | 'lecturers' | 'students';
 
 export default function AdminDashboard() {
-  const { currentUser, logout, departments, users, approveLecturer, getDepartmentModules, getDepartmentLecturers, createDepartment, createModule } = useAuth();
+  const { currentUser, logout, departments, users, approveLecturer, getDepartmentModules, getDepartmentLecturers, createDepartment, createModule, modules, enrollments } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('departments');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
   const [showCreateDepartmentModal, setShowCreateDepartmentModal] = useState(false);
   const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
+  const [showUserDetailModal, setShowUserDetailModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<typeof users[0] | null>(null);
   const [newDepartmentName, setNewDepartmentName] = useState('');
   const [newModuleData, setNewModuleData] = useState({
     code: '',
@@ -72,6 +74,23 @@ export default function AdminDashboard() {
 
     setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
     setShowCreateModuleModal(false);
+  };
+
+  const handleUserClick = (user: typeof users[0]) => {
+    setSelectedUser(user);
+    setShowUserDetailModal(true);
+  };
+
+  const getUserModules = (user: typeof users[0]) => {
+    if (user.role === 'LECTURER') {
+      return modules.filter(m => m.lecturerId === user.id);
+    } else if (user.role === 'STUDENT') {
+      const studentEnrollments = enrollments.filter(e => e.studentId === user.id);
+      return studentEnrollments.map(enrollment => 
+        modules.find(m => m.id === enrollment.moduleId)
+      ).filter(Boolean);
+    }
+    return [];
   };
 
   return (
@@ -293,7 +312,7 @@ export default function AdminDashboard() {
                     const dept = departments.find(d => d.id === lecturer.departmentId);
                     
                     return (
-                      <tr key={lecturer.id}>
+                      <tr key={lecturer.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleUserClick(lecturer)}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {lecturer.firstName} {lecturer.lastName}
                         </td>
@@ -313,7 +332,10 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {!lecturer.isActive && (
                             <button
-                              onClick={() => approveLecturer(lecturer.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                approveLecturer(lecturer.id);
+                              }}
                               className="text-green-600 hover:text-green-700 font-medium"
                             >
                               Approve
@@ -348,7 +370,7 @@ export default function AdminDashboard() {
                     const dept = departments.find(d => d.id === student.departmentId);
                     
                     return (
-                      <tr key={student.id}>
+                      <tr key={student.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleUserClick(student)}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {student.firstName} {student.lastName}
                         </td>
@@ -487,6 +509,163 @@ export default function AdminDashboard() {
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* User Detail Modal */}
+      {showUserDetailModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  {selectedUser.firstName} {selectedUser.lastName}
+                </h3>
+                <span className={`inline-block mt-2 px-3 py-1 text-sm rounded-full ${
+                  selectedUser.role === 'ADMIN' 
+                    ? 'bg-purple-100 text-purple-700'
+                    : selectedUser.role === 'LECTURER'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-green-100 text-green-700'
+                }`}>
+                  {selectedUser.role}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserDetailModal(false);
+                  setSelectedUser(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* User Information */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-gray-900 mb-3">Personal Information</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex">
+                  <span className="font-medium text-gray-600 w-32">Username:</span>
+                  <span className="text-gray-900">{selectedUser.username}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium text-gray-600 w-32">Email:</span>
+                  <span className="text-gray-900">{selectedUser.email}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium text-gray-600 w-32">Department:</span>
+                  <span className="text-gray-900">
+                    {departments.find(d => d.id === selectedUser.departmentId)?.name || 'N/A'}
+                  </span>
+                </div>
+                {selectedUser.role === 'LECTURER' && (
+                  <div className="flex">
+                    <span className="font-medium text-gray-600 w-32">Status:</span>
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                      selectedUser.isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {selectedUser.isActive ? 'Active' : 'Pending Approval'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modules Section */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">
+                {selectedUser.role === 'LECTURER' ? 'Teaching Modules' : 'Enrolled Modules'}
+              </h4>
+              {getUserModules(selectedUser).length === 0 ? (
+                <div className="bg-gray-50 rounded-lg p-8 text-center">
+                  <p className="text-gray-600">
+                    {selectedUser.role === 'LECTURER' 
+                      ? 'No modules assigned yet'
+                      : 'Not enrolled in any modules yet'
+                    }
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {getUserModules(selectedUser).map((module: any) => {
+                    const isFull = module.enrolledCount >= module.limit;
+                    const dept = departments.find(d => d.id === module.departmentId);
+                    
+                    return (
+                      <div key={module.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h5 className="font-semibold text-gray-900">{module.name}</h5>
+                            <p className="text-sm text-gray-600">{module.code}</p>
+                          </div>
+                          {selectedUser.role === 'LECTURER' && (
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                            }`}>
+                              {isFull ? 'Full' : 'Open'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <p>Department: {dept?.name}</p>
+                          {selectedUser.role === 'LECTURER' && (
+                            <p>Enrolled: {module.enrolledCount}/{module.limit} students</p>
+                          )}
+                        </div>
+                        {selectedUser.role === 'LECTURER' && (
+                          <div className="mt-2">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className={`h-2 rounded-full transition-all ${
+                                  isFull ? 'bg-red-600' : 'bg-green-600'
+                                }`}
+                                style={{
+                                  width: `${Math.min((module.enrolledCount / module.limit) * 100, 100)}%`
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Approve Button for Pending Lecturers */}
+            {selectedUser.role === 'LECTURER' && !selectedUser.isActive && (
+              <div className="mt-6 pt-6 border-t">
+                <button
+                  onClick={() => {
+                    approveLecturer(selectedUser.id);
+                    setShowUserDetailModal(false);
+                    setSelectedUser(null);
+                  }}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  Approve Lecturer
+                </button>
+              </div>
+            )}
+
+            {/* Close Button */}
+            <div className="mt-6">
+              <button
+                onClick={() => {
+                  setShowUserDetailModal(false);
+                  setSelectedUser(null);
+                }}
+                className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
