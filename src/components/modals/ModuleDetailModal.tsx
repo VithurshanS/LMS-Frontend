@@ -1,6 +1,7 @@
-import { Module, User, Department } from '../types';
+import { Module, User, Department } from '../../types';
 import Modal from './Modal';
-import Badge from './Badge';
+import Badge from '../ui/Badge';
+import StudentView from '../views/StudentView';
 
 interface ModuleDetailModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface ModuleDetailModalProps {
   module: Module;
   lecturer?: User;
   department?: Department;
+  departments?: Department[];
   enrolledStudents?: User[];
 }
 
@@ -17,6 +19,7 @@ export default function ModuleDetailModal({
   module, 
   lecturer,
   department,
+  departments = [],
   enrolledStudents = []
 }: ModuleDetailModalProps) {
   const isFull = module.enrolledCount >= module.limit;
@@ -24,16 +27,15 @@ export default function ModuleDetailModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Module Details" maxWidth="2xl">
       <div className="space-y-6">
-        {/* Module Overview */}
         <div className="bg-gray-50 rounded-lg p-4">
           <div className="flex justify-between items-start mb-4">
             <div>
               <h4 className="text-xl font-bold text-gray-900">{module.name}</h4>
               <p className="text-sm text-gray-600">{module.code}</p>
             </div>
-            <Badge variant={isFull ? 'error' : 'success'}>
+            {/* <Badge variant={isFull ? 'error' : 'success'}>
               {isFull ? 'Full' : 'Open'}
-            </Badge>
+            </Badge> */}
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -77,41 +79,21 @@ export default function ModuleDetailModal({
         </div>
 
         {/* Enrolled Students List */}
-        {enrolledStudents.length > 0 && (
-          <div>
-            <h5 className="font-semibold text-gray-900 mb-3">
-              Enrolled Students ({enrolledStudents.length})
-            </h5>
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {enrolledStudents.map(student => (
-                    <tr key={student.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {student.firstName} {student.lastName}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {student.email}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {student.username}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {enrolledStudents.length === 0 && (
+        {enrolledStudents.length > 0 ? (
+          <StudentView
+            students={enrolledStudents}
+            departments={departments}
+            modules={[module]}
+            enrollments={[]}
+            title={`Enrolled Students (${enrolledStudents.length})`}
+            showDepartment={true}
+            showUsername={true}
+            showActions={false}
+            enableModal={false}
+            emptyMessage="No students enrolled yet"
+            className="bg-white border border-gray-200 rounded-lg p-4"
+          />
+        ) : (
           <div className="bg-gray-50 rounded-lg p-6 text-center">
             <p className="text-gray-600">No students enrolled yet</p>
           </div>

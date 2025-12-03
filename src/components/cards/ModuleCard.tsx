@@ -30,11 +30,11 @@ export default function ModuleCard({
           <h4 className="font-semibold text-gray-900 text-lg">{module.name}</h4>
           <p className="text-sm text-gray-600">{module.code}</p>
         </div>
-        <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ml-2 ${
+        {/* <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ml-2 ${
           isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
         }`}>
           {isFull ? 'Full' : 'Open'}
-        </span>
+        </span> */}
       </div>
 
       <div className="space-y-2 text-sm text-gray-600 mb-3">

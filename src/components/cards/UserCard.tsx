@@ -1,4 +1,4 @@
-import { User, Department } from '../types';
+import { User, Department } from '../../types';
 
 interface UserCardProps {
   user: User;
@@ -11,7 +11,7 @@ export default function UserCard({ user, department, onClick, actionButton }: Us
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-green-100 text-purple-700';
       case 'LECTURER':
         return 'bg-blue-100 text-blue-700';
       case 'STUDENT':

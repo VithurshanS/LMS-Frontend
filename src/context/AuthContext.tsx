@@ -13,7 +13,7 @@ interface AuthContextType {
   departments: Department[];
   modules: Module[];
   enrollments: Enrollment[];
-  login: (username: string, role: Role) => boolean;
+  login: (username: string, password: string) => boolean;
   logout: () => void;
   register: (userData: Omit<User, 'id' | 'isActive'>) => void;
   approveLecturer: (userId: string) => void;
@@ -32,16 +32,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [departments, setDepartments] = useState<Department[]>(initialDepartments);
+  const [users, setUsers] = useState<User[]>(initialUsers);  // no need bcz it will be handled by backend
+  const [departments, setDepartments] = useState<Department[]>(initialDepartments); // need to fetch from backend
   const [modules, setModules] = useState<Module[]>(initialModules);
   const [enrollments, setEnrollments] = useState<Enrollment[]>(initialEnrollments);
 
-  const login = (username: string, role: Role): boolean => {
-    const user = users.find(u => u.username === username && u.role === role);
+  const login = (username: string, password: string): boolean => {
+    const user = users.find(u => u.username === username && u.password === password);
     
     if (!user) {
-      alert('Invalid username or role');
+      alert('Invalid username or password');
       return false;
     }
 
@@ -62,7 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newUser: User = {
       ...userData,
       id: `u${Date.now()}`,
-      // Lecturers are inactive by default, students are active
       isActive: userData.role !== 'LECTURER',
     };
 

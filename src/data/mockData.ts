@@ -11,6 +11,7 @@ export const users: User[] = [
   {
     id: 'u1',
     username: 'admin',
+    password: 'admin123',
     firstName: 'Admin',
     lastName: 'User',
     email: 'admin@university.edu',
@@ -22,6 +23,7 @@ export const users: User[] = [
   {
     id: 'u2',
     username: 'student1',
+    password: 'pass123',
     firstName: 'Alice',
     lastName: 'Johnson',
     email: 'alice.johnson@university.edu',
@@ -32,6 +34,7 @@ export const users: User[] = [
   {
     id: 'u3',
     username: 'student2',
+    password: 'pass123',
     firstName: 'Bob',
     lastName: 'Smith',
     email: 'bob.smith@university.edu',
@@ -44,6 +47,7 @@ export const users: User[] = [
   {
     id: 'u4',
     username: 'lecturer1',
+    password: 'pass123',
     firstName: 'Dr. Carol',
     lastName: 'Davis',
     email: 'carol.davis@university.edu',
@@ -54,6 +58,7 @@ export const users: User[] = [
   {
     id: 'u5',
     username: 'lecturer_pending',
+    password: 'pass123',
     firstName: 'Dr. David',
     lastName: 'Wilson',
     email: 'david.wilson@university.edu',

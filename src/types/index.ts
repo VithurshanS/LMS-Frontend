@@ -1,4 +1,4 @@
-// types/index.ts
+
 
 export type Role = 'ADMIN' | 'LECTURER' | 'STUDENT';
 
@@ -7,15 +7,18 @@ export interface Department {
   name: string;
 }
 
+
+
 export interface User {
   id: string;
   username: string;
+  password: string;
   firstName: string;
   lastName: string;
   email: string;
   role: Role;
-  departmentId?: string; // Nullable for Admins
-  isActive: boolean;     // Crucial for Lecturer approval flow
+  departmentId?: string; 
+  isActive: boolean;     
 }
 
 export interface Module {

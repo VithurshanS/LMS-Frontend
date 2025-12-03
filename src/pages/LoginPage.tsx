@@ -1,27 +1,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Role } from '../types';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
-  const [role, setRole] = useState<Role>('STUDENT');
-  const { login } = useAuth();
+  const [password, setPassword] = useState('');
+  const { login, users } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const success = login(username, role);
+    const success = login(username, password);
     
     if (success) {
-      // Redirect based on role
-      if (role === 'ADMIN') {
-        navigate('/admin');
-      } else if (role === 'LECTURER') {
-        navigate('/lecturer');
-      } else {
-        navigate('/student');
+      // Find the logged-in user to determine routing
+      const loggedInUser = users.find(u => u.username === username && u.password === password);
+      
+      if (loggedInUser) {
+        if (loggedInUser.role === 'ADMIN') {
+          navigate('/admin');
+        } else if (loggedInUser.role === 'LECTURER') {
+          navigate('/lecturer');
+        } else {
+          navigate('/student');
+        }
       }
     }
   };
@@ -54,19 +57,18 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
-                Login As
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
               </label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as Role)}
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="STUDENT">Student</option>
-                <option value="LECTURER">Lecturer</option>
-                <option value="ADMIN">Admin</option>
-              </select>
+                placeholder="Enter your password"
+                required
+              />
             </div>
 
             <button
@@ -92,9 +94,9 @@ export default function LoginPage() {
           <div className="mt-8 p-4 bg-gray-50 rounded-lg">
             <p className="text-xs font-semibold text-gray-700 mb-2">Test Accounts:</p>
             <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Admin:</strong> admin</p>
-              <p><strong>Student:</strong> student1 or student2</p>
-              <p><strong>Lecturer:</strong> lecturer1 (active) or lecturer_pending (pending approval)</p>
+              <p><strong>Admin:</strong> admin / admin123</p>
+              <p><strong>Student:</strong> student1 / pass123 or student2 / pass123</p>
+              <p><strong>Lecturer:</strong> lecturer1 / pass123 (active) or lecturer_pending / pass123 (pending)</p>
             </div>
           </div>
         </div>

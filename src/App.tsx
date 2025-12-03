@@ -26,24 +26,21 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/admin"
+        <Route path="/admin"
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <AdminDashboard />
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/student"
+        <Route path="/student"
           element={
             <ProtectedRoute allowedRoles={['STUDENT']}>
               <StudentDashboard />
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/lecturer"
+        <Route path="/lecturer"
           element={
             <ProtectedRoute allowedRoles={['LECTURER']}>
               <LecturerDashboard />
