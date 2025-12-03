@@ -221,7 +221,7 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* Create Department Modal */}
+
       <CreateDepartmentModal
         isOpen={showCreateDepartmentModal}
         onClose={() => {
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
         onSubmit={handleCreateDepartment}
       />
 
-      {/* Create Module Modal */}
+
       <CreateModuleModal
         isOpen={showCreateModuleModal && !!selectedDepartment}
         onClose={() => {

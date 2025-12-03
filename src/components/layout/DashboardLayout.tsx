@@ -23,7 +23,7 @@ export default function DashboardLayout({ title, children, headerActions }: Dash
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+  
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -46,7 +46,7 @@ export default function DashboardLayout({ title, children, headerActions }: Dash
         </div>
       </header>
 
-      {/* Content */}
+
       <main className="max-w-7xl mx-auto px-4 py-8">
         {children}
       </main>

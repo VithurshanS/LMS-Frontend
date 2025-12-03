@@ -141,7 +141,7 @@ export default function LecturerView({
         </table>
       </div>
       
-      {/* Lecturer count summary */}
+
       <div className="mt-4 text-sm text-gray-600">
         <p>Total lecturers: {lecturers.length}</p>
         {lecturers.filter(l => !l.isActive).length > 0 && (
@@ -149,7 +149,7 @@ export default function LecturerView({
         )}
       </div>
 
-      {/* Lecturer Detail Modal */}
+ 
       {selectedLecturer && enableModal && (
         <LecturerDetailModal
           isOpen={showModal}
