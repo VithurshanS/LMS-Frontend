@@ -21,7 +21,6 @@ export default function StudentDetailModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Student Details" maxWidth="2xl">
       <div className="space-y-6">
-        {/* Student Information */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="font-semibold text-gray-900 mb-3">Personal Information</h4>
           <div className="space-y-2 text-sm">
@@ -52,7 +51,7 @@ export default function StudentDetailModal({
           </div>
         </div>
 
-        {/* Enrolled Modules */}
+
         <div>
           <h4 className="font-semibold text-gray-900 mb-3">
             Enrolled Modules ({enrolledModules.length})
@@ -82,9 +81,9 @@ export default function StudentDetailModal({
                     </div>
                     <div className="text-sm text-gray-600 space-y-1">
                       <p>Enrolled: {module.enrolledCount}/{module.limit} students</p>
-                      {enrollment && (
+                      {/* {enrollment && (
                         <p>Enrolled on: {new Date(enrollment.enrolledAt).toLocaleDateString()}</p>
-                      )}
+                      )} */}
                     </div>
                     <div className="mt-2">
                       <div className="w-full bg-gray-200 rounded-full h-2">

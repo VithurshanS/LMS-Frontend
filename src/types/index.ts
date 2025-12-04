@@ -35,5 +35,5 @@ export interface Enrollment {
   id: string;
   studentId: string;
   moduleId: string;
-  enrolledAt: string;
+  // enrolledAt: string;
 }

@@ -14,7 +14,6 @@ export default function LoginPage() {
     const success = login(username, password);
     
     if (success) {
-      // Find the logged-in user to determine routing
       const loggedInUser = users.find(u => u.username === username && u.password === password);
       
       if (loggedInUser) {

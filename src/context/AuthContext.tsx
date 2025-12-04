@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       id: `e${Date.now()}`,
       studentId,
       moduleId,
-      enrolledAt: new Date().toISOString(),
+      // enrolledAt: new Date().toISOString(),
     };
 
     setEnrollments(prev => [...prev, newEnrollment]);

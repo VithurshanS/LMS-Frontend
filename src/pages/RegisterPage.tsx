@@ -9,6 +9,7 @@ export default function RegisterPage() {
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
     role: 'STUDENT' as Role,
     departmentId: '',
   });

@@ -126,6 +126,6 @@ export const enrollments: Enrollment[] = [
     id: 'e1',
     studentId: 'u2', // Alice Johnson
     moduleId: 'm1', // CS101
-    enrolledAt: new Date().toISOString(),
+    // enrolledAt: new Date().toISOString(),
   },
 ];

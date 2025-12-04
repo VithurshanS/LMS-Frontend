@@ -126,12 +126,12 @@ export default function StudentView({
         </table>
       </div>
       
-      {/* Student count summary */}
+
       <div className="mt-4 text-sm text-gray-600">
         <p>Total students: {students.length}</p>
       </div>
 
-      {/* Student Detail Modal */}
+
       {selectedStudent && enableModal && (
         <StudentDetailModal
           isOpen={showModal}
