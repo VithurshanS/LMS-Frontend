@@ -37,3 +37,15 @@ export interface Enrollment {
   moduleId: string;
   // enrolledAt: string;
 }
+
+export interface RegistrationRequest {
+  username: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  departmentId:string;
+}
+
+

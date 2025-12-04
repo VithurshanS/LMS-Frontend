@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Silent Callback</title>
+</head>
+<body>
+    <script>
+        // This script runs in an iframe during silent token renewal
+        // It communicates with the parent window which has access to oidc-client-ts
+        if (window.parent) {
+            window.parent.postMessage(window.location.href, window.location.origin);
+        }
+    </script>
+</body>
+</html>

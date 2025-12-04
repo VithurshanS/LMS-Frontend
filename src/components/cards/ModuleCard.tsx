@@ -7,6 +7,7 @@ interface ModuleCardProps {
   showProgress?: boolean;
   actionButton?: React.ReactNode;
   onClick?: () => void;
+  onViewStudents?: () => void;
 }
 
 export default function ModuleCard({ 
@@ -15,7 +16,8 @@ export default function ModuleCard({
   showLecturer = true, 
   showProgress = true,
   actionButton,
-  onClick 
+  onClick,
+  onViewStudents
 }: ModuleCardProps) {
   const isFull = module.enrolledCount >= module.limit;
   const percentage = Math.min((module.enrolledCount / module.limit) * 100, 100);
@@ -67,6 +69,18 @@ export default function ModuleCard({
             />
           </div>
         </div>
+      )}
+
+      {onViewStudents && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewStudents();
+          }}
+          className="w-full mb-3 px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+        >
+          See Enrolled Students ({module.enrolledCount})
+        </button>
       )}
 
       {actionButton && (

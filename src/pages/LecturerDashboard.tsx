@@ -75,20 +75,10 @@ export default function LecturerDashboard() {
         </div>
       </section>
 
-      {/* Assigned Modules Section */}
       <section className="mb-8">
         <ModuleView
           modules={lecturerModules}
-          lecturers={users}
-          departments={departments}
-          students={users.filter(u => u.role === 'STUDENT')}
-          enrollments={enrollments}
           title="My Modules"
-          showDepartment={true}
-          showLecturer={false}
-          showEnrollment={true}
-          layout="grid"
-          emptyMessage="You have no assigned modules yet."
         />
       </section>
 

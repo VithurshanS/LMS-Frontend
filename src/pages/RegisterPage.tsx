@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Role } from '../types';
+import { RegistrationRequest, Role } from '../types';
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegistrationRequest>({
     username: '',
     firstName: '',
     lastName: '',
@@ -13,25 +13,20 @@ export default function RegisterPage() {
     role: 'STUDENT' as Role,
     departmentId: '',
   });
-  
   const { register, departments } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit =async (e: React.FormEvent) => {
     e.preventDefault();
     
     if ((formData.role === 'STUDENT' || formData.role === 'LECTURER') && !formData.departmentId) {
       alert('Please select a department');
       return;
     }
-
-    register(formData);
     
-    if (formData.role === 'STUDENT') {
-      navigate('/student');
-    } else if (formData.role === 'ADMIN') {
-      navigate('/admin');
-    } else {
+    const succ = await register(formData);
+    
+    if (succ){
       navigate('/login');
     }
   };
@@ -102,6 +97,21 @@ export default function RegisterPage() {
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  Password *
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  // required
+                  // minLength={6}
                 />
               </div>
 

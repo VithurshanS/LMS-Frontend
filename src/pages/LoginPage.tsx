@@ -1,30 +1,40 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const { login, users } = useAuth();
+  const { loginWithOidc, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const success = login(username, password);
-    
-    if (success) {
-      const loggedInUser = users.find(u => u.username === username && u.password === password);
-      
-      if (loggedInUser) {
-        if (loggedInUser.role === 'ADMIN') {
-          navigate('/admin');
-        } else if (loggedInUser.role === 'LECTURER') {
-          navigate('/lecturer');
-        } else {
-          navigate('/student');
-        }
-      }
+
+  // Handle navigation when user is authenticated
+  useEffect(() => {
+    if (currentUser && !isLoading) {
+      const redirectPath = currentUser.role === 'ADMIN' ? '/admin' 
+                        : currentUser.role === 'LECTURER' ? '/lecturer' 
+                        : '/student';
+      navigate(redirectPath, { replace: true });
+    }
+  }, [currentUser, isLoading, navigate]);
+
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleOidcLogin = async () => {
+    try {
+      await loginWithOidc();
+    } catch (error) {
+      console.error('OIDC login failed:', error);
+      alert('SSO login failed. Please try again.');
     }
   };
 
@@ -39,67 +49,34 @@ export default function LoginPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Login</h2>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter your username"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Login
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+          <div className="space-y-6">
+            <div className="text-center">
+              <p className="text-gray-600 mb-6">
+                Sign in with your organization account using Single Sign-On (SSO)
+              </p>
               <button
-                onClick={() => navigate('/register')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                onClick={handleOidcLogin}
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
-                Register here
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+                </svg>
+                Sign in with SSO
               </button>
-            </p>
+            </div>
           </div>
 
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs font-semibold text-gray-700 mb-2">Test Accounts:</p>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Admin:</strong> admin / admin123</p>
-              <p><strong>Student:</strong> student1 / pass123 or student2 / pass123</p>
-              <p><strong>Lecturer:</strong> lecturer1 / pass123 (active) or lecturer_pending / pass123 (pending)</p>
-            </div>
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => navigate('/register')}
+              className="text-blue-600 hover:text-blue-700 text-sm"
+            >
+              Don't have an account? Register
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
 }
+

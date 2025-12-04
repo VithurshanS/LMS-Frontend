@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { User, Module, Department, Enrollment, Role } from '../types';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { UserManager } from 'oidc-client-ts';
+import { User, Module, Department, Enrollment, RegistrationRequest } from '../types';
 import { 
   departments as initialDepartments, 
   users as initialUsers, 
@@ -7,15 +8,35 @@ import {
   enrollments as initialEnrollments 
 } from '../data/mockData';
 
+
+import { UserManagerSettings } from 'oidc-client-ts';
+import { getAllDepartmentsPublic, GetUser, registerUser } from '../api/api';
+
+export const oidcConfig: UserManagerSettings = {
+  authority: 'http://localhost:8080/realms/ironone',
+  client_id: 'lms-frontend',
+  redirect_uri: window.location.origin + '/callback',
+  response_type: 'code',
+  scope: 'openid profile email',
+  automaticSilentRenew: true,
+  silent_redirect_uri: window.location.origin + '/silent-callback.html',
+  post_logout_redirect_uri: window.location.origin,
+};
+
+
+
 interface AuthContextType {
   currentUser: User | null;
   users: User[];
   departments: Department[];
+  setDepartments: React.Dispatch<React.SetStateAction<Department[]>>;
   modules: Module[];
   enrollments: Enrollment[];
-  login: (username: string, password: string) => boolean;
+  loginWithOidc: () => Promise<void>;
   logout: () => void;
-  register: (userData: Omit<User, 'id' | 'isActive'>) => void;
+  register: (userData: RegistrationRequest) => Promise<boolean>;
+  isLoading: boolean;
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   approveLecturer: (userId: string) => void;
   enrollInModule: (studentId: string, moduleId: string) => boolean;
   getDepartmentModules: (departmentId: string) => Module[];
@@ -36,41 +57,89 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [departments, setDepartments] = useState<Department[]>(initialDepartments); // need to fetch from backend
   const [modules, setModules] = useState<Module[]>(initialModules);
   const [enrollments, setEnrollments] = useState<Enrollment[]>(initialEnrollments);
-
-  const login = (username: string, password: string): boolean => {
-    const user = users.find(u => u.username === username && u.password === password);
-    
-    if (!user) {
-      alert('Invalid username or password');
-      return false;
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [userManager] = useState(() => new UserManager(oidcConfig));
+  const didProcessCallback = useRef(false);
+  
+  useEffect(() => {
+    const fetchDepartments = async ()=>{
+      const depts = await getAllDepartmentsPublic();
+      setDepartments(depts);
     }
+    const initAuth = async () => {
+      try {
+        setIsLoading(true);
+        if (window.location.pathname === '/callback') {
+          if (didProcessCallback.current) {
+             return;
+          }
+          didProcessCallback.current = true;
 
-    if (user.role === 'LECTURER' && !user.isActive) {
-      alert('Account pending approval.');
-      return false;
+          try {
+            await userManager.signinRedirectCallback();
+            window.history.replaceState({}, document.title, '/');
+            
+            const user = await GetUser();
+            if (user) {
+              setCurrentUser(user);
+            }
+            return;
+          } catch (error) {
+            console.error('Signin callback error:', error);
+            setIsLoading(false);
+            return;
+          }
+        }
+        const storedUser = await userManager.getUser();
+        
+        if (storedUser && !storedUser.expired) {
+          const user = await GetUser();
+          if (user) {
+            setCurrentUser(user);
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
+    fetchDepartments();
+  }, [userManager]);
+
+  const loginWithOidc = async (): Promise<void> => {
+    try {
+      await userManager.signinRedirect();
+    } catch (error) {
+      console.error('OIDC login error:', error);
+      throw error;
     }
-
-    setCurrentUser(user);
-    return true;
   };
+
 
   const logout = () => {
     setCurrentUser(null);
+    sessionStorage.clear();
+    userManager.signoutRedirect();
   };
 
-  const register = (userData: Omit<User, 'id' | 'isActive'>) => {
-    const newUser: User = {
-      ...userData,
-      id: `u${Date.now()}`,
-      isActive: userData.role !== 'LECTURER',
-    };
-
-    setUsers(prev => [...prev, newUser]);
-    
-    if (newUser.isActive) {
-      setCurrentUser(newUser);
-    } else {
-      alert('Registration successful! Your account is pending approval.');
+  const register = async (userData: RegistrationRequest): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      const success = await registerUser(userData);
+      setIsLoading(false);
+      if (success) {
+        alert('Registration successful! Please login.');
+      } else {
+        alert('Registration failed. Please try again.');
+      }
+      return success;
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('Registration failed. Please try again.');
+      return false;
     }
   };
 
@@ -179,11 +248,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         currentUser,
         users,
         departments,
+        setDepartments,
         modules,
         enrollments,
-        login,
+        loginWithOidc,
         logout,
         register,
+        isLoading,
+        setUsers,
         approveLecturer,
         enrollInModule,
         getDepartmentModules,

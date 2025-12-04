@@ -8,7 +8,7 @@ const apiClient = axios.create({
   },
 });
 
-const publicEndpoints = ['/auth/register', '/auth/login', '/auth/sample'];
+const publicEndpoints = ['/auth/*'];
 
 apiClient.interceptors.request.use((config) => {
     const isPublicEndpoint = publicEndpoints.some(endpoint => 
@@ -21,7 +21,7 @@ apiClient.interceptors.request.use((config) => {
         //     config.headers.Authorization = `Bearer ${manualToken}`;
         //     return config;
         // }
-        const sessStorage = sessionStorage.getItem(`oidc.user:http://localhost:8080/realms/ironone:lms-iam`);
+        const sessStorage = sessionStorage.getItem(`oidc.user:http://localhost:8080/realms/ironone:lms-frontend`);
         if (sessStorage) {
             const user = User.fromStorageString(sessStorage);
             if (user && user.access_token) {
