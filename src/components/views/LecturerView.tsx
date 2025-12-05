@@ -1,37 +1,29 @@
 import { useState } from 'react';
-import { User, Department, Module, Enrollment } from '../../types';
+import { User, Department } from '../../types';
 import LecturerDetailModal from '../modals/LecturerDetailModal';
 
 interface LecturerViewProps {
   lecturers: User[];
   departments: Department[];
-  modules?: Module[];
-  enrollments?: Enrollment[];
   title: string;
   showDepartment?: boolean;
-  showStatus?: boolean;
-  showActions?: boolean;
   onLecturerClick?: (lecturer: User) => void;
-  onApproveLecturer?: (lecturerId: string) => void;
   emptyMessage?: string;
   className?: string;
   enableModal?: boolean;
+  onLecturerUpdate?: () => void;
 }
 
 export default function LecturerView({
   lecturers,
   departments,
-  modules = [],
-  enrollments = [],
   title,
   showDepartment = true,
-  showStatus = true,
-  showActions = true,
   onLecturerClick,
-  onApproveLecturer,
   emptyMessage = "No lecturers found",
   className = "",
-  enableModal = true
+  enableModal = true,
+  onLecturerUpdate
 }: LecturerViewProps) {
   const [selectedLecturer, setSelectedLecturer] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -43,10 +35,6 @@ export default function LecturerView({
       setSelectedLecturer(lecturer);
       setShowModal(true);
     }
-  };
-
-  const getLecturerModules = (lecturerId: string): Module[] => {
-    return modules.filter(m => m.lecturerId === lecturerId);
   };
 
   if (lecturers.length === 0) {
@@ -72,12 +60,7 @@ export default function LecturerView({
               {showDepartment && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
               )}
-              {showStatus && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              )}
-              {showActions && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              )}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -90,10 +73,10 @@ export default function LecturerView({
                   className={`hover:bg-gray-50 ${(onLecturerClick || enableModal) ? 'cursor-pointer' : ''}`}
                   onClick={(onLecturerClick || enableModal) ? () => handleLecturerClick(lecturer) : undefined}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {lecturer.firstName} {lecturer.lastName}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-600">
                     {lecturer.email}
                   </td>
                   {showDepartment && (
@@ -101,46 +84,19 @@ export default function LecturerView({
                       {dept?.name || 'N/A'}
                     </td>
                   )}
-                  {showStatus && (
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        lecturer.isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {lecturer.isActive ? 'Active' : 'Pending'}
-                      </span>
-                    </td>
-                  )}
-                  {showActions && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {!lecturer.isActive && onApproveLecturer && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onApproveLecturer(lecturer.id);
-                          }}
-                          className="text-green-600 hover:text-green-700 font-medium mr-4"
-                        >
-                          Approve
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLecturerClick(lecturer);
-                        }}
-                        className="text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  )}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      lecturer.isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {lecturer.isActive ? 'Active' : 'Pending'}
+                    </span>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      
 
       <div className="mt-4 text-sm text-gray-600">
         <p>Total lecturers: {lecturers.length}</p>
@@ -149,7 +105,7 @@ export default function LecturerView({
         )}
       </div>
 
- 
+      {/* Lecturer Detail Modal - Fetches teaching modules on demand */}
       {selectedLecturer && enableModal && (
         <LecturerDetailModal
           isOpen={showModal}
@@ -159,8 +115,6 @@ export default function LecturerView({
           }}
           lecturer={selectedLecturer}
           department={departments.find(d => d.id === selectedLecturer.departmentId)}
-          teachingModules={getLecturerModules(selectedLecturer.id)}
-          onApproveLecturer={onApproveLecturer}
         />
       )}
     </div>

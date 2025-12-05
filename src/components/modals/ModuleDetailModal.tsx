@@ -144,7 +144,7 @@ export default function ModuleDetailModal({
             </div>
           </div>
 
-          {/* Lecturer Info */}
+
           <InfoCard
             title="Lecturer"
             action={{
@@ -223,14 +223,14 @@ export default function ModuleDetailModal({
             )}
           </InfoCard>
 
-          {/* Department Info */}
+
           {moduleDetails.department && (
             <InfoCard title="Department">
               <p className="text-gray-700">{moduleDetails.department.name}</p>
             </InfoCard>
           )}
 
-          {/* Enrolled Students List */}
+ 
           <InfoCard
             title={`Enrolled Students (${moduleDetails.enrolledStudents?.length || 0})`}
             action={{
@@ -265,7 +265,7 @@ export default function ModuleDetailModal({
         </div>
       )}
 
-      {/* Student Detail Modal */}
+
       {selectedStudent && (
         <StudentDetailModal
           isOpen={showStudentModal}
@@ -278,7 +278,6 @@ export default function ModuleDetailModal({
         />
       )}
 
-      {/* Lecturer Detail Modal */}
       {selectedLecturer && (
         <LecturerDetailModal
           isOpen={showLecturerModal}

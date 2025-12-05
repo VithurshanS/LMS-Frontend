@@ -134,5 +134,12 @@ export const assignLecturerToModule = async (moduleId: string, lecturerId: strin
     }
 }
 
-
-
+export const getModulesbyLecturerId = async (lecturerId: string): Promise<Module[]> => {
+    try {
+        const response = await apiClient.get(`/api/lecturer/getmodule-lect/${lecturerId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to get modules by lecturer:', error);
+        return [];
+    }
+}

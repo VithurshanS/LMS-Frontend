@@ -53,9 +53,6 @@ export default function AdminDashboard() {
         setDepartments(depts);
         setAllLecturers(lects);
         setAllStudents(studs);
-        // console.log(depts);
-        console.log(lects);
-        // console.log(studs);
       }
     };
     
@@ -173,13 +170,8 @@ export default function AdminDashboard() {
                   <LecturerView
                     lecturers={departmentLecturers}
                     departments={departments}
-                    modules={modules}
-                    enrollments={enrollments}
                     title="Lecturers"
                     showDepartment={false}
-                    showStatus={true}
-                    showActions={true}
-                    onApproveLecturer={approveLecturer}
                     emptyMessage="No lecturers in this department yet"
                   />
                 </div>
@@ -233,13 +225,8 @@ export default function AdminDashboard() {
           <LecturerView
             lecturers={allLecturers}
             departments={departments}
-            modules={modules}
-            enrollments={enrollments}
             title="Lecturers"
             showDepartment={true}
-            showStatus={true}
-            showActions={true}
-            onApproveLecturer={approveLecturer}
             emptyMessage="No lecturers registered yet"
           />
         )}

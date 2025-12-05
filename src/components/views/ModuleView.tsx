@@ -110,7 +110,6 @@ export default function ModuleView({
         )}
       </div>
 
-      {/* Module Detail Modal - Fetches details on demand */}
       {selectedModule && enableModal && (
         <ModuleDetailModal
           isOpen={showModal}
