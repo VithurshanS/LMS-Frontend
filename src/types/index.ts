@@ -60,3 +60,15 @@ export interface ModuleCreationRequest {
   departmentId: string;
   adminId: string;
 }
+
+
+export interface EnrollmentRequest {
+  studentId: string;
+  moduleId: string;
+}
+
+export interface ControllUserRequest {
+  id: string;
+  control: "BAN"|"UNBAN";
+  role:"student"|"lecturer";
+}

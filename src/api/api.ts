@@ -1,5 +1,5 @@
 import apiClient from './axiosConfig';
-import { User, RegistrationRequest, Department, Module, AssignmentRequest,ModuleCreationRequest } from '../types';
+import { User, RegistrationRequest, Department, Module, AssignmentRequest,ModuleCreationRequest,EnrollmentRequest,ControllUserRequest } from '../types';
 
 
 export const GetUser = async (): Promise<User | null> => {
@@ -26,25 +26,18 @@ export const registerUser = async (userData: RegistrationRequest): Promise<boole
 
 export const getAllDepartments = async ():Promise<Department[]> => {
     try {
-        const response = await apiClient.get('/api/admin/get-all-dept');
+        const response = await apiClient.get('/api/department/all');
         return response.data;
     } catch (error){
         return [];
     }
 }
 
-export const getAllDepartmentsPublic = async ():Promise<Department[]> => {
-    try {
-        const response = await apiClient.get('/auth/get-all-dept');
-        return response.data;
-    } catch (error){
-        return [];
-    }
-}
+
 
 export const getAllLecturers = async ():Promise<User[]> => {
     try{
-        const response = await apiClient.get('/api/admin/all-lecturers')
+        const response = await apiClient.get('/api/lecturer/all')
         return response.data;
 
     } catch(error){
@@ -55,7 +48,7 @@ export const getAllLecturers = async ():Promise<User[]> => {
 
 export const getAllDepartmentLecturers = async(departmentId:string):Promise<User[]> => {
     try{
-        const response = await apiClient.get(`/api/admin/lecturers-by-dept/${departmentId}`);
+        const response = await apiClient.get(`/api/lecturer/departmentId/${departmentId}`);
         return response.data;
     } catch(error){
         console.log(error);
@@ -65,7 +58,7 @@ export const getAllDepartmentLecturers = async(departmentId:string):Promise<User
 
 export const getAllDepartmentStudents = async(departmentId:string):Promise<User[]> => {
     try{
-        const response = await apiClient.get(`/api/admin/students-by-dept/${departmentId}`);
+        const response = await apiClient.get(`/api/student/departmentId/${departmentId}`);
         return response.data;
     } catch(error){
         console.log(error);
@@ -75,7 +68,7 @@ export const getAllDepartmentStudents = async(departmentId:string):Promise<User[
 
 export const getAllStudents = async ():Promise<User[]> => {
     try{
-        const response = await apiClient.get('/api/admin/all-students');
+        const response = await apiClient.get('/api/student/all');
         return response.data;
 
     } catch(error){
@@ -86,7 +79,7 @@ export const getAllStudents = async ():Promise<User[]> => {
 
 export const getDeptModuleDetails = async(departmentId:string):Promise<Module[]> => {
     try{
-        const response = await apiClient.get(`/api/admin/getmodule-dept/${departmentId}`);
+        const response = await apiClient.get(`/api/module/departmentId/${departmentId}`);
         return response.data;
     } catch(error){
         console.log(error);
@@ -96,7 +89,7 @@ export const getDeptModuleDetails = async(departmentId:string):Promise<Module[]>
 }
 export const getLecturerById = async (lecturerId: string): Promise<User | null> => {
     try {
-        const response = await apiClient.get(`/api/admin/lecturer/${lecturerId}`);
+        const response = await apiClient.get(`/api/lecturer/id/${lecturerId}`);
         return response.data;
     } catch (error) {
         console.error('Failed to get lecturer:', error);
@@ -106,7 +99,7 @@ export const getLecturerById = async (lecturerId: string): Promise<User | null> 
 
 export const getDepartmentById = async (departmentId: string): Promise<Department | null> => {
     try {
-        const response = await apiClient.get(`/api/admin/department/${departmentId}`);
+        const response = await apiClient.get(`/api/department/id/${departmentId}`);
         return response.data;
     } catch (error) {
         console.error('Failed to get department:', error);
@@ -116,7 +109,7 @@ export const getDepartmentById = async (departmentId: string): Promise<Departmen
 
 export const getEnrolledStudentsByModuleId = async (moduleId: string): Promise<User[]> => {
     try {
-        const response = await apiClient.get(`/api/student/students-by-module/${moduleId}`);
+        const response = await apiClient.get(`/api/student/moduleId/${moduleId}`);
         return response.data;
     } catch (error) {
         console.error('Failed to get enrolled students:', error);
@@ -126,7 +119,7 @@ export const getEnrolledStudentsByModuleId = async (moduleId: string): Promise<U
 
 export const assignLecturerToModule = async (assignmentRequest: AssignmentRequest): Promise<boolean> => {
     try {
-        const response = await apiClient.patch(`/api/admin/assign-lecturer`,assignmentRequest);
+        const response = await apiClient.patch(`/api/module/assignLecturer`,assignmentRequest);
         console.log(response);
         return response.status >= 200 && response.status < 300;
     } catch (error) {
@@ -137,7 +130,7 @@ export const assignLecturerToModule = async (assignmentRequest: AssignmentReques
 
 export const getModulesbyLecturerId = async (lecturerId: string): Promise<Module[]> => {
     try {
-        const response = await apiClient.get(`/api/lecturer/getmodule-lect/${lecturerId}`);
+        const response = await apiClient.get(`/api/module/lecturerId/${lecturerId}`);
         return response.data;
     } catch (error) {
         console.error('Failed to get modules by lecturer:', error);
@@ -147,7 +140,7 @@ export const getModulesbyLecturerId = async (lecturerId: string): Promise<Module
 
 export const getModulebyStudentId = async (studentId: string): Promise<Module[]> => {
     try {
-        const response = await apiClient.get(`/api/student/enrollments/${studentId}`);
+        const response = await apiClient.get(`/api/module/studentId/${studentId}`);
         console.log('Modules by student response:', response);
         return response.data;
     } catch (error) {
@@ -158,7 +151,7 @@ export const getModulebyStudentId = async (studentId: string): Promise<Module[]>
 
 export const createModule = async (moduleData: ModuleCreationRequest): Promise<Module | null> => {
     try {
-        const response = await apiClient.post('/api/admin/create-module', moduleData);
+        const response = await apiClient.post('/api/module/create', moduleData);
         if (response.status === 201){
             console.log('Module created successfully:', response.data);
             return response.data;
@@ -172,7 +165,7 @@ export const createModule = async (moduleData: ModuleCreationRequest): Promise<M
 
 export const createDepartment = async (name: string): Promise<Department | null> => {
     try {
-        const response = await apiClient.post('/api/admin/create-dept', { name });
+        const response = await apiClient.post('/api/department/create', { name });
         if (response.status === 201){
             console.log('Department created successfully:', response.data);
             return response.data;
@@ -184,12 +177,34 @@ export const createDepartment = async (name: string): Promise<Department | null>
     }
 }
 
-export const approveLecturer = async (lecturerId: string): Promise<boolean> => {
+
+
+export const enrolltoModule = async (enrollmentRequest: EnrollmentRequest): Promise<boolean> => {
     try {
-        const response = await apiClient.patch(`/api/admin/approve-lecturer/`, { lecturerId });
+        const response = await apiClient.post(`/api/enrollment/enroll`, enrollmentRequest);
         return response.status >= 200 && response.status < 300;
     } catch (error) {
-        console.error('Failed to approve lecturer:', error);
+        console.error('Failed to enroll to module:', error);
+        return false;
+    }       
+}
+
+export const controlUserAccess = async (controlRequest: ControllUserRequest): Promise<boolean> => {
+    try {
+        const response = await apiClient.patch(`/auth/control`, controlRequest);
+        return response.status >= 200 && response.status < 300;
+    } catch (error) {
+        console.error('Failed to control user access:', error);
+        return false;
+    }
+}
+
+export const unerrollFromModule = async (enrollmentRequest: EnrollmentRequest): Promise<boolean> => {
+    try {
+        const response = await apiClient.delete(`/api/enrollment/unenroll`, { data: enrollmentRequest });
+        return response.status >= 200 && response.status < 300;
+    } catch (error) {
+        console.error('Failed to unenroll from module:', error);
         return false;
     }
 }

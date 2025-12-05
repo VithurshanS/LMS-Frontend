@@ -12,6 +12,7 @@ interface LecturerViewProps {
   className?: string;
   enableModal?: boolean;
   onLecturerUpdate?: () => void;
+  currentUser?: User;
 }
 
 export default function LecturerView({
@@ -23,12 +24,14 @@ export default function LecturerView({
   emptyMessage = "No lecturers found",
   className = "",
   enableModal = true,
-  onLecturerUpdate
+  onLecturerUpdate,
+  currentUser
 }: LecturerViewProps) {
   const [selectedLecturer, setSelectedLecturer] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const handleLecturerClick = (lecturer: User) => {
+  const handleLecturerClick = (e: React.MouseEvent, lecturer: User) => {
+    e.stopPropagation();
     if (onLecturerClick) {
       onLecturerClick(lecturer);
     } else if (enableModal) {
@@ -71,7 +74,7 @@ export default function LecturerView({
                 <tr 
                   key={lecturer.id} 
                   className={`hover:bg-gray-50 ${(onLecturerClick || enableModal) ? 'cursor-pointer' : ''}`}
-                  onClick={(onLecturerClick || enableModal) ? () => handleLecturerClick(lecturer) : undefined}
+                  onClick={(onLecturerClick || enableModal) ? (e) => handleLecturerClick(e, lecturer) : undefined}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {lecturer.firstName} {lecturer.lastName}
@@ -116,6 +119,7 @@ export default function LecturerView({
           lecturer={selectedLecturer}
           department={departments.find(d => d.id === selectedLecturer.departmentId)}
           onLecturerUpdate={onLecturerUpdate}
+          currentUser={currentUser}
         />
       )}
     </div>

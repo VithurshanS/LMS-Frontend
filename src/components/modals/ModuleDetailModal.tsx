@@ -4,23 +4,32 @@ import Modal from './Modal';
 import StudentDetailModal from './StudentDetailModal';
 import LecturerDetailModal from './LecturerDetailModal';
 import { InfoCard, UserAvatar, UserListItem } from '../ui';
-import { getLecturerById, getDepartmentById, getEnrolledStudentsByModuleId, getAllDepartmentLecturers, assignLecturerToModule } from '../../api/api';
+import { getLecturerById, getDepartmentById, getEnrolledStudentsByModuleId, getAllDepartmentLecturers, assignLecturerToModule, unerrollFromModule } from '../../api/api';
 
 interface ModuleDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   module: Module;
   onModuleUpdate?: () => void;
+  showStudentsList?: boolean;
+  allowLecturerClick?: boolean;
+  allowLecturerAssignment?: boolean;
+  currentUser?: User;
 }
 
 export default function ModuleDetailModal({ 
   isOpen, 
   onClose, 
   module,
-  onModuleUpdate
+  onModuleUpdate,
+  showStudentsList = true,
+  allowLecturerClick = true,
+  allowLecturerAssignment = true,
+  currentUser
 }: ModuleDetailModalProps) {
   const [loading, setLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [unenrolling, setUnenrolling] = useState<string | null>(null);
   const [showLecturerSelect, setShowLecturerSelect] = useState(false);
   const [showEnrolledStudents, setShowEnrolledStudents] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
@@ -34,6 +43,8 @@ export default function ModuleDetailModal({
     departmentLecturers?: User[];
   }>({});
   const [updatedModule, setUpdatedModule] = useState<Module>(module);
+  
+  const isAdmin = currentUser?.role === 'ADMIN';
 
   useEffect(() => {
     if (isOpen && module) {
@@ -51,18 +62,26 @@ export default function ModuleDetailModal({
   const fetchModuleDetails = async () => {
     setLoading(true);
     try {
-      const [lecturer, department, enrolledStudents, departmentLecturers] = await Promise.all([
+      const fetchPromises: Promise<any>[] = [
         updatedModule.lecturerId ? getLecturerById(updatedModule.lecturerId) : Promise.resolve(null),
-        getDepartmentById(updatedModule.departmentId),
-        getEnrolledStudentsByModuleId(updatedModule.id),
-        getAllDepartmentLecturers(updatedModule.departmentId)
-      ]);
+        getDepartmentById(updatedModule.departmentId)
+      ];
+
+      // Only fetch students and department lecturers if needed
+      if (showStudentsList) {
+        fetchPromises.push(getEnrolledStudentsByModuleId(updatedModule.id));
+      }
+      if (allowLecturerAssignment) {
+        fetchPromises.push(getAllDepartmentLecturers(updatedModule.departmentId));
+      }
+
+      const results = await Promise.all(fetchPromises);
       
       setModuleDetails({
-        lecturer,
-        department,
-        enrolledStudents,
-        departmentLecturers
+        lecturer: results[0],
+        department: results[1],
+        enrolledStudents: showStudentsList ? results[2] : [],
+        departmentLecturers: allowLecturerAssignment ? results[showStudentsList ? 3 : 2] : []
       });
     } catch (error) {
       console.error('Failed to fetch module details:', error);
@@ -93,8 +112,40 @@ export default function ModuleDetailModal({
     }
   };
 
+  const handleUnenroll = async (studentId: string) => {
+    if (!confirm('Are you sure you want to unenroll this student from the module?')) {
+      return;
+    }
+
+    setUnenrolling(studentId);
+    try {
+      const success = await unerrollFromModule({ studentId, moduleId: updatedModule.id });
+      if (success) {
+        // Refresh module details to update the enrolled students list
+        await fetchModuleDetails();
+        // Update the enrolled count
+        setUpdatedModule(prev => ({
+          ...prev,
+          enrolledCount: Math.max(0, prev.enrolledCount - 1)
+        }));
+        if (onModuleUpdate) {
+          onModuleUpdate();
+        }
+      } else {
+        alert('Failed to unenroll student. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to unenroll student:', error);
+      alert('Failed to unenroll student. Please try again.');
+    } finally {
+      setUnenrolling(null);
+    }
+  };
+
   const isFull = updatedModule.enrolledCount >= updatedModule.limit;
   const percentFilled = (updatedModule.enrolledCount / updatedModule.limit) * 100;
+  const hasLecturer = updatedModule.lecturerId && moduleDetails.lecturer;
+  const isNotReady = !hasLecturer;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Module Details" maxWidth="2xl">
@@ -111,11 +162,12 @@ export default function ModuleDetailModal({
                 <p className="text-sm text-gray-600 mt-1">{updatedModule.code}</p>
               </div>
               <span className={`px-3 py-1 text-sm rounded-full ${
+                isNotReady ? 'bg-gray-100 text-gray-700' :
                 isFull ? 'bg-red-100 text-red-700' : 
                 percentFilled >= 80 ? 'bg-yellow-100 text-yellow-700' :
                 'bg-green-100 text-green-700'
               }`}>
-                {isFull ? 'Full' : percentFilled >= 80 ? 'Almost Full' : 'Open'}
+                {isNotReady ? 'Not Available' : isFull ? 'Full' : percentFilled >= 80 ? 'Almost Full' : 'Open'}
               </span>
             </div>
 
@@ -156,10 +208,10 @@ export default function ModuleDetailModal({
 
           <InfoCard
             title="Lecturer"
-            action={{
+            action={allowLecturerAssignment ? {
               label: moduleDetails.lecturer ? 'Reassign' : 'Assign Lecturer',
               onClick: () => setShowLecturerSelect(!showLecturerSelect)
-            }}
+            } : undefined}
           >
             {showLecturerSelect ? (
               <div className="space-y-2">
@@ -210,21 +262,33 @@ export default function ModuleDetailModal({
             ) : (
               <>
                 {moduleDetails.lecturer ? (
-                  <button
-                    onClick={() => {
-                      setSelectedLecturer(moduleDetails.lecturer!);
-                      setShowLecturerModal(true);
-                    }}
-                    className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer w-full text-left"
-                  >
-                    <UserAvatar firstName={moduleDetails.lecturer.firstName} lastName={moduleDetails.lecturer.lastName} color="blue" />
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {moduleDetails.lecturer.firstName} {moduleDetails.lecturer.lastName}
-                      </p>
-                      <p className="text-sm text-gray-600">{moduleDetails.lecturer.email}</p>
+                  allowLecturerClick ? (
+                    <button
+                      onClick={() => {
+                        setSelectedLecturer(moduleDetails.lecturer!);
+                        setShowLecturerModal(true);
+                      }}
+                      className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer w-full text-left"
+                    >
+                      <UserAvatar firstName={moduleDetails.lecturer.firstName} lastName={moduleDetails.lecturer.lastName} color="blue" />
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {moduleDetails.lecturer.firstName} {moduleDetails.lecturer.lastName}
+                        </p>
+                        <p className="text-sm text-gray-600">{moduleDetails.lecturer.email}</p>
+                      </div>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-3 p-2">
+                      <UserAvatar firstName={moduleDetails.lecturer.firstName} lastName={moduleDetails.lecturer.lastName} color="blue" />
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {moduleDetails.lecturer.firstName} {moduleDetails.lecturer.lastName}
+                        </p>
+                        <p className="text-sm text-gray-600">{moduleDetails.lecturer.email}</p>
+                      </div>
                     </div>
-                  </button>
+                  )
                 ) : (
                   <p className="text-sm text-gray-500">No lecturer assigned yet</p>
                 )}
@@ -240,33 +304,49 @@ export default function ModuleDetailModal({
           )}
 
  
-          <InfoCard
-            title={`Enrolled Students (${moduleDetails.enrolledStudents?.length || 0})`}
-            action={{
-              label: showEnrolledStudents ? 'Hide Students' : 'Show Students',
-              onClick: () => setShowEnrolledStudents(!showEnrolledStudents)
-            }}
-          >
-            {showEnrolledStudents && moduleDetails.enrolledStudents && moduleDetails.enrolledStudents.length > 0 && (
-              <div className="max-h-60 overflow-y-auto space-y-2">
-                {moduleDetails.enrolledStudents.map((student) => (
-                  <UserListItem
-                    key={student.id}
-                    user={student}
-                    onClick={() => {
-                      setSelectedStudent(student);
-                      setShowStudentModal(true);
-                    }}
-                    avatarColor="green"
-                  />
-                ))}
-              </div>
-            )}
-            
-            {showEnrolledStudents && (!moduleDetails.enrolledStudents || moduleDetails.enrolledStudents.length === 0) && (
-              <p className="text-sm text-gray-500 py-2">No students enrolled yet</p>
-            )}
-          </InfoCard>
+          {showStudentsList && (
+            <InfoCard
+              title={`Enrolled Students (${moduleDetails.enrolledStudents?.length || 0})`}
+              action={{
+                label: showEnrolledStudents ? 'Hide Students' : 'Show Students',
+                onClick: () => setShowEnrolledStudents(!showEnrolledStudents)
+              }}
+            >
+              {showEnrolledStudents && moduleDetails.enrolledStudents && moduleDetails.enrolledStudents.length > 0 && (
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  {moduleDetails.enrolledStudents.map((student) => (
+                    <UserListItem
+                      key={student.id}
+                      user={student}
+                      onClick={() => {
+                        setSelectedStudent(student);
+                        setShowStudentModal(true);
+                      }}
+                      avatarColor="green"
+                      rightElement={
+                        isAdmin && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnenroll(student.id);
+                            }}
+                            disabled={unenrolling === student.id}
+                            className="px-3 py-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {unenrolling === student.id ? 'Removing...' : 'Remove'}
+                          </button>
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {showEnrolledStudents && (!moduleDetails.enrolledStudents || moduleDetails.enrolledStudents.length === 0) && (
+                <p className="text-sm text-gray-500 py-2">No students enrolled yet</p>
+              )}
+            </InfoCard>
+          )}
 
           <div className="text-sm text-gray-500 text-center pt-4 border-t">
             Click outside or press ESC to close

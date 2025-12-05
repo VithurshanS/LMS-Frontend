@@ -6,17 +6,20 @@ interface StudentViewProps {
   students: User[];
   departments: Department[];
   onStudentUpdate?: () => void;
+  currentUser?: User;
 }
 
 export default function StudentView({
   students,
   departments,
-  onStudentUpdate
+  onStudentUpdate,
+  currentUser
 }: StudentViewProps) {
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const handleStudentClick = (student: User) => {
+  const handleStudentClick = (e: React.MouseEvent, student: User) => {
+    e.stopPropagation();
     setSelectedStudent(student);
     setShowModal(true);
   };
@@ -52,7 +55,7 @@ export default function StudentView({
                 <tr 
                   key={student.id} 
                   className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => handleStudentClick(student)}
+                  onClick={(e) => handleStudentClick(e, student)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {student.firstName} {student.lastName}
@@ -90,6 +93,8 @@ export default function StudentView({
           }}
           student={selectedStudent}
           department={departments.find(d => d.id === selectedStudent.departmentId)}
+          onStudentUpdate={onStudentUpdate}
+          currentUser={currentUser}
         />
       )}
     </div>

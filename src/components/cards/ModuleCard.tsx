@@ -19,6 +19,8 @@ export default function ModuleCard({
   onClick,
   onViewStudents
 }: ModuleCardProps) {
+  const hasLecturer = module.lecturerId;
+  const isNotReady = !hasLecturer;
   const isFull = module.enrolledCount >= module.limit;
   const percentage = Math.min((module.enrolledCount / module.limit) * 100, 100);
 
@@ -32,11 +34,13 @@ export default function ModuleCard({
           <h4 className="font-semibold text-gray-900 text-lg">{module.name}</h4>
           <p className="text-sm text-gray-600">{module.code}</p>
         </div>
-        {/* <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ml-2 ${
-          isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+        <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ml-2 ${
+          isNotReady ? 'bg-gray-100 text-gray-700' :
+          isFull ? 'bg-red-100 text-red-700' : 
+          'bg-green-100 text-green-700'
         }`}>
-          {isFull ? 'Full' : 'Open'}
-        </span> */}
+          {isNotReady ? 'Not Available' : isFull ? 'Full' : 'Open'}
+        </span>
       </div>
 
       <div className="space-y-2 text-sm text-gray-600 mb-3">

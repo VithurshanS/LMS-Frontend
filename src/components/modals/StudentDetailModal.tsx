@@ -3,27 +3,35 @@ import { User, Department, Module } from '../../types';
 import Modal from './Modal';
 import ModuleDetailModal from './ModuleDetailModal';
 import { InfoCard } from '../ui';
-import { getDepartmentById, getModulebyStudentId } from '../../api/api';
+import { getDepartmentById, getModulebyStudentId, controlUserAccess, unerrollFromModule } from '../../api/api';
 
 interface StudentDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   student: User;
   department?: Department;
+  onStudentUpdate?: () => void;
+  currentUser?: User;
 }
 
 export default function StudentDetailModal({
   isOpen,
   onClose,
   student,
-  department: propDepartment
+  department: propDepartment,
+  onStudentUpdate,
+  currentUser
 }: StudentDetailModalProps) {
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [unenrolling, setUnenrolling] = useState<string | null>(null);
   const [showModules, setShowModules] = useState(false);
   const [enrolledModules, setEnrolledModules] = useState<Module[]>([]);
   const [department, setDepartment] = useState<Department | undefined>(propDepartment);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [showModuleModal, setShowModuleModal] = useState(false);
+  
+  const isAdmin = currentUser?.role === 'ADMIN';
 
   useEffect(() => {
     if (isOpen && student) {
@@ -45,6 +53,85 @@ export default function StudentDetailModal({
       console.error('Failed to fetch student details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBanStudent = async () => {
+    if (!confirm(`Are you sure you want to ban ${student.firstName} ${student.lastName}?`)) {
+      return;
+    }
+    
+    setActionLoading(true);
+    try {
+      const success = await controlUserAccess({
+        id: student.id,
+        control: 'BAN',
+        role: 'student'
+      });
+      if (success) {
+        alert('Student banned successfully!');
+        if (onStudentUpdate) {
+          onStudentUpdate();
+        }
+        onClose();
+      } else {
+        alert('Failed to ban student. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to ban student:', error);
+      alert('Failed to ban student. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUnbanStudent = async () => {
+    setActionLoading(true);
+    try {
+      const success = await controlUserAccess({
+        id: student.id,
+        control: 'UNBAN',
+        role: 'student'
+      });
+      if (success) {
+        alert('Student unbanned successfully!');
+        if (onStudentUpdate) {
+          onStudentUpdate();
+        }
+        onClose();
+      } else {
+        alert('Failed to unban student. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to unban student:', error);
+      alert('Failed to unban student. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUnenrollFromModule = async (moduleId: string) => {
+    if (!confirm('Are you sure you want to unenroll this student from the module?')) {
+      return;
+    }
+
+    setUnenrolling(moduleId);
+    try {
+      const success = await unerrollFromModule({ studentId: student.id, moduleId });
+      if (success) {
+        // Refresh student details to update the enrolled modules list
+        await fetchStudentDetails();
+        if (onStudentUpdate) {
+          onStudentUpdate();
+        }
+      } else {
+        alert('Failed to unenroll from module. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to unenroll from module:', error);
+      alert('Failed to unenroll from module. Please try again.');
+    } finally {
+      setUnenrolling(null);
     }
   };
 
@@ -105,55 +192,113 @@ export default function StudentDetailModal({
                 const percentFilled = (module.enrolledCount / module.limit) * 100;
                 
                 return (
-                  <button
-                    key={module.id}
-                    onClick={() => {
-                      setSelectedModule(module);
-                      setShowModuleModal(true);
-                    }}
-                    className="w-full bg-white border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer text-left"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h5 className="font-semibold text-gray-900">{module.name}</h5>
-                        <p className="text-xs text-gray-600">{module.code}</p>
+                  <div key={module.id} className="w-full bg-white border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                    <button
+                      onClick={() => {
+                        setSelectedModule(module);
+                        setShowModuleModal(true);
+                      }}
+                      className="w-full cursor-pointer text-left"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h5 className="font-semibold text-gray-900">{module.name}</h5>
+                          <p className="text-xs text-gray-600">{module.code}</p>
+                        </div>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          isFull ? 'bg-red-100 text-red-700' : 
+                          percentFilled >= 80 ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {isFull ? 'Full' : percentFilled >= 80 ? 'Almost Full' : 'Open'}
+                        </span>
                       </div>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        isFull ? 'bg-red-100 text-red-700' : 
-                        percentFilled >= 80 ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-green-100 text-green-700'
-                      }`}>
-                        {isFull ? 'Full' : percentFilled >= 80 ? 'Almost Full' : 'Open'}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p>Enrolled: {module.enrolledCount}/{module.limit} students</p>
-                    </div>
-                    <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            isFull ? 'bg-red-600' : 
-                            percentFilled >= 80 ? 'bg-yellow-600' :
-                            'bg-green-600'
-                          }`}
-                          style={{
-                            width: `${Math.min(percentFilled, 100)}%`
+                      <div className="text-sm text-gray-600">
+                        <p>Enrolled: {module.enrolledCount}/{module.limit} students</p>
+                      </div>
+                      <div className="mt-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all ${
+                              isFull ? 'bg-red-600' : 
+                              percentFilled >= 80 ? 'bg-yellow-600' :
+                              'bg-green-600'
+                            }`}
+                            style={{
+                              width: `${Math.min(percentFilled, 100)}%`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </button>
+                    {isAdmin && (
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUnenrollFromModule(module.id);
                           }}
-                        />
+                          disabled={unenrolling === module.id}
+                          className="w-full px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {unenrolling === module.id ? 'Removing...' : 'Remove from Module'}
+                        </button>
                       </div>
-                    </div>
-                  </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
           )}
         </InfoCard>
 
+        {/* Action Buttons */}
+        {isAdmin && (
+          <div className="space-y-3 pt-4 border-t">
+            {/* Ban Button for Active Students */}
+            {student.isActive && (
+              <button
+                onClick={handleBanStudent}
+                disabled={actionLoading}
+                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  'Ban Student'
+                )}
+              </button>
+            )}
+
+            {/* Unban Button for Inactive Students */}
+            {!student.isActive && (
+              <button
+                onClick={handleUnbanStudent}
+                disabled={actionLoading}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  'Unban Student'
+                )}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Close Button */}
         <div className="pt-4 border-t">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            disabled={actionLoading}
+            className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             Close
           </button>
@@ -170,6 +315,7 @@ export default function StudentDetailModal({
           }}
           module={selectedModule}
           onModuleUpdate={fetchStudentDetails}
+          currentUser={currentUser}
         />
       )}
     </Modal>

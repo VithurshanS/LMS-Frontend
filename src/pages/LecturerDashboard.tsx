@@ -1,37 +1,64 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   DashboardLayout, 
-  ModuleCard, 
-  EmptyState, 
   StudentView, 
   ModuleView 
 } from '../components';
+import { Module, Department } from '../types';
+import { getModulesbyLecturerId, getDepartmentById, getAllDepartmentStudents } from '../api/api';
 
 export default function LecturerDashboard() {
-  const { currentUser, logout, modules, departments, users, enrollments } = useAuth();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [lecturerModules, setLecturerModules] = useState<Module[]>([]);
+  const [department, setDepartment] = useState<Department | null>(null);
+  const [departmentStudents, setDepartmentStudents] = useState<any[]>([]);
 
-  if (currentUser?.role !== 'LECTURER') {
-    navigate('/login');
+  useEffect(() => {
+    if (currentUser?.role !== 'LECTURER') {
+      navigate('/login');
+      return;
+    }
+    fetchDashboardData();
+  }, [currentUser, navigate]);
+
+  const fetchDashboardData = async () => {
+    if (!currentUser) return;
+    
+    setLoading(true);
+    try {
+      const [modules, dept, students] = await Promise.all([
+        getModulesbyLecturerId(currentUser.id),
+        currentUser.departmentId ? getDepartmentById(currentUser.departmentId) : Promise.resolve(null),
+        currentUser.departmentId ? getAllDepartmentStudents(currentUser.departmentId) : Promise.resolve([])
+      ]);
+
+      setLecturerModules(modules);
+      setDepartment(dept);
+      setDepartmentStudents(students);
+    } catch (error) {
+      console.error('Failed to fetch lecturer dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!currentUser || currentUser.role !== 'LECTURER') {
     return null;
   }
 
-  const lecturerModules = modules.filter(m => m.lecturerId === currentUser.id);
-  const department = departments.find(d => d.id === currentUser.departmentId);
-  
-  // Get all students in lecturer's department
-  const departmentStudents = users.filter(u => 
-    u.role === 'STUDENT' && u.departmentId === currentUser.departmentId
-  );
-  
-  // Get all students enrolled in lecturer's modules
-  const allEnrolledStudents = users.filter(u => 
-    u.role === 'STUDENT' && 
-    enrollments.some(e => 
-      lecturerModules.some(m => m.id === e.moduleId) && e.studentId === u.id
-    )
-  );
+  if (loading) {
+    return (
+      <DashboardLayout title="Lecturer Dashboard">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout 
@@ -78,34 +105,22 @@ export default function LecturerDashboard() {
       <section className="mb-8">
         <ModuleView
           modules={lecturerModules}
-          title="My Modules"
-        />
-      </section>
-
-      {/* Students in My Modules Section */}
-      <section className="mb-8">
-        <StudentView
-          students={allEnrolledStudents}
-          departments={departments}
-          // enrollments={enrollments}
-          // title="Students in My Modules"
-          // showDepartment={true}
-          // showUsername={false}
-          // emptyMessage="No students enrolled in your modules yet"
+          title="My Teaching Modules"
+          emptyMessage="No modules assigned yet"
+          onModuleUpdate={fetchDashboardData}
+          currentUser={currentUser || undefined}
         />
       </section>
 
       {/* Department Students Section */}
       <section>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Students in {department?.name || 'Department'}
+        </h2>
         <StudentView
           students={departmentStudents}
-          departments={departments}
-          // modules={modules}
-          // enrollments={enrollments}
-          // title={`Students in ${department?.name || 'Department'}`}
-          // showDepartment={false}
-          // showUsername={true}
-          // emptyMessage="No students in your department yet"
+          departments={department ? [department] : []}
+          currentUser={currentUser || undefined}
         />
       </section>
     </DashboardLayout>

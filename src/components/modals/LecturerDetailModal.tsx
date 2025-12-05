@@ -3,7 +3,7 @@ import { User, Department, Module } from '../../types';
 import Modal from './Modal';
 import ModuleDetailModal from './ModuleDetailModal';
 import { InfoCard } from '../ui';
-import { getModulesbyLecturerId, approveLecturer as approveLecturerAPI } from '../../api/api';
+import { getModulesbyLecturerId, controlUserAccess } from '../../api/api';
 
 interface LecturerDetailModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface LecturerDetailModalProps {
   lecturer: User;
   department?: Department;
   onLecturerUpdate?: () => void;
+  currentUser?: User;
 }
 
 export default function LecturerDetailModal({
@@ -18,14 +19,17 @@ export default function LecturerDetailModal({
   onClose,
   lecturer,
   department,
-  onLecturerUpdate
+  onLecturerUpdate,
+  currentUser
 }: LecturerDetailModalProps) {
   const [loading, setLoading] = useState(false);
-  const [approving, setApproving] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [showModules, setShowModules] = useState(false);
   const [teachingModules, setTeachingModules] = useState<Module[]>([]);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [showModuleModal, setShowModuleModal] = useState(false);
+  
+  const isAdmin = currentUser?.role === 'ADMIN';
 
   useEffect(() => {
     if (isOpen && lecturer) {
@@ -46,9 +50,13 @@ export default function LecturerDetailModal({
   };
 
   const handleApproveLecturer = async () => {
-    setApproving(true);
+    setActionLoading(true);
     try {
-      const success = await approveLecturerAPI(lecturer.id);
+      const success = await controlUserAccess({
+        id: lecturer.id,
+        control: 'UNBAN',
+        role: 'lecturer'
+      });
       if (success) {
         alert('Lecturer approved successfully!');
         if (onLecturerUpdate) {
@@ -62,7 +70,36 @@ export default function LecturerDetailModal({
       console.error('Failed to approve lecturer:', error);
       alert('Failed to approve lecturer. Please try again.');
     } finally {
-      setApproving(false);
+      setActionLoading(false);
+    }
+  };
+
+  const handleBanLecturer = async () => {
+    if (!confirm(`Are you sure you want to ban ${lecturer.firstName} ${lecturer.lastName}?`)) {
+      return;
+    }
+    
+    setActionLoading(true);
+    try {
+      const success = await controlUserAccess({
+        id: lecturer.id,
+        control: 'BAN',
+        role: 'lecturer'
+      });
+      if (success) {
+        alert('Lecturer banned successfully!');
+        if (onLecturerUpdate) {
+          onLecturerUpdate();
+        }
+        onClose();
+      } else {
+        alert('Failed to ban lecturer. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to ban lecturer:', error);
+      alert('Failed to ban lecturer. Please try again.');
+    } finally {
+      setActionLoading(false);
     }
   };
   
@@ -169,29 +206,53 @@ export default function LecturerDetailModal({
           </InfoCard>
 
           {/* Action Buttons */}
-          <div className="space-y-3 pt-4 border-t">
-            {/* Approve Button for Pending Lecturers */}
-            {!lecturer.isActive && (
-              <button
-                onClick={handleApproveLecturer}
-                disabled={approving}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                {approving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Approving...
-                  </>
-                ) : (
-                  'Approve Lecturer'
-                )}
-              </button>
-            )}
+          {isAdmin && (
+            <div className="space-y-3 pt-4 border-t">
+              {/* Approve Button for Pending Lecturers */}
+              {!lecturer.isActive && (
+                <button
+                  onClick={handleApproveLecturer}
+                  disabled={actionLoading}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {actionLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    'Approve Lecturer'
+                  )}
+                </button>
+              )}
 
-            {/* Close Button */}
+              {/* Ban Button for Active Lecturers */}
+              {lecturer.isActive && (
+                <>
+                  <button
+                    onClick={handleBanLecturer}
+                    disabled={actionLoading}
+                    className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {actionLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      'Ban Lecturer'
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Close Button */}
+          <div className="pt-4 border-t">
             <button
               onClick={onClose}
-              disabled={approving}
+              disabled={actionLoading}
               className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               Close
@@ -210,6 +271,7 @@ export default function LecturerDetailModal({
           }}
           module={selectedModule}
           onModuleUpdate={fetchTeachingModules}
+          currentUser={currentUser}
         />
       )}
     </Modal>

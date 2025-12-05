@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   DashboardLayout, 
-  TabNavigation, 
   StudentView, 
   LecturerView, 
   ModuleView, 
@@ -13,11 +11,8 @@ import {
 import { Department, Module, User } from '../types';
 import { getAllDepartments,getAllLecturers,getAllStudents,getDeptModuleDetails,getAllDepartmentLecturers,getAllDepartmentStudents, createModule as createModuleAPI, assignLecturerToModule, createDepartment as createDepartmentAPI } from '../api/api';
 
-type TabType = 'departments' | 'lecturers' | 'students';
-
 export default function AdminDashboard() {
-  const { currentUser, approveLecturer } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>('departments');
+  const { currentUser } = useAuth();
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
   const [showCreateDepartmentModal, setShowCreateDepartmentModal] = useState(false);
   const [showCreateModuleModal, setShowCreateModuleModal] = useState(false);
@@ -36,10 +31,13 @@ export default function AdminDashboard() {
   });
   const [isCreatingModule, setIsCreatingModule] = useState(false);
   const [isCreatingDepartment, setIsCreatingDepartment] = useState(false);
-
   
-  // const [departments,setDepartments] = useState<Department[]>([])
-  const navigate = useNavigate();
+  // Expandable sections state
+  const [expandedSections, setExpandedSections] = useState({
+    departments: true,
+    lecturers: false,
+    students: false
+  });
 
 
 
@@ -175,130 +173,250 @@ export default function AdminDashboard() {
     }
   };
 
-  const tabs = [
-    { key: 'departments', label: 'Departments' },
-    { key: 'lecturers', label: 'Lecturers' },
-    { key: 'students', label: 'Students' }
-  ];
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab as TabType);
-    setSelectedDepartmentId(null);
+  const toggleSection = (section: 'departments' | 'lecturers' | 'students') => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   };
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} tabs={tabs} />
-      
-      <div className="mt-8">
-        {activeTab === 'departments' && (
+      <div className="space-y-6">
+        {selectedDepartment ? (
           <div>
-            {selectedDepartment ? (
-              <div>
-                <button
-                  onClick={() => setSelectedDepartmentId(null)}
-                  className="mb-4 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  ← Back to Departments
-                </button>
+            <button
+              onClick={() => setSelectedDepartmentId(null)}
+              className="mb-6 flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            >
+              ← Back to Departments
+            </button>
+            
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">{selectedDepartment.name}</h2>
+              <button
+                onClick={() => setShowCreateModuleModal(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm hover:shadow"
+              >
+                + Add Module
+              </button>
+            </div>
+
+            {/* Modules Section */}
+            <div className="mb-6">
+              <div 
+                onClick={() => toggleSection('departments')}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all"
+              >
+                <div className="px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Modules</h3>
+                    <p className="text-sm text-gray-600">{departmentModules.length} modules in this department</p>
+                  </div>
+                  <span className={`text-gray-400 transition-transform duration-200 ${expandedSections.departments ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </div>
                 
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedDepartment.name}</h2>
-                  <button
-                    onClick={() => setShowCreateModuleModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    + Add Module
-                  </button>
-                </div>
-
-                <div className="mb-8">
-                  <ModuleView
-                    modules={departmentModules}
-                    title="Modules"
-                    emptyMessage="No modules in this department yet"
-                    onModuleUpdate={fetchDepartmentData}
-                  />
-                </div>
-
-                <div className="mb-8">
-                  <LecturerView
-                    lecturers={departmentLecturers}
-                    departments={departments}
-                    title="Lecturers"
-                    showDepartment={false}
-                    emptyMessage="No lecturers in this department yet"
-                    onLecturerUpdate={fetchDepartmentData}
-                  />
-                </div>
-
-                <StudentView
-                  students={departmentStudents}
-                  departments={departments}
-                  // modules={modules}
-                  // enrollments={enrollments}
-                  // title="Students in Department"
-                  // showDepartment={false}
-                  // showUsername={true}
-                  // emptyMessage="No students in this department yet"
-                />
+                {expandedSections.departments && (
+                  <div className="px-6 pb-6 border-t border-gray-100">
+                    <div className="mt-4">
+                      <ModuleView
+                        modules={departmentModules}
+                        title=""
+                        emptyMessage="No modules in this department yet"
+                        onModuleUpdate={fetchDepartmentData}
+                        currentUser={currentUser || undefined}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Departments</h2>
-                  <button
-                    onClick={() => setShowCreateDepartmentModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    + Add Department
-                  </button>
+            </div>
+
+            {/* Lecturers Section */}
+            <div className="mb-6">
+              <div 
+                onClick={() => toggleSection('lecturers')}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all"
+              >
+                <div className="px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Lecturers</h3>
+                    <p className="text-sm text-gray-600">{departmentLecturers.length} lecturers in this department</p>
+                  </div>
+                  <span className={`text-gray-400 transition-transform duration-200 ${expandedSections.lecturers ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {departments.map(dept => {
-                    //const deptLecturers = getDepartmentLecturers(dept.id);
-                    
-                    return (
-                      <button
-                        key={dept.id}
-                        onClick={() => setSelectedDepartmentId(dept.id)}
-                        className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-left"
-                      >
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{dept.name}</h3>
-                          {/* <div className="space-y-1 text-sm text-gray-600">
-                            <p>{departmentLecturers.length} Lecturers</p>
-                          </div> */}
-                      </button>
-                    );
-                  })}
-                </div>
+                
+                {expandedSections.lecturers && (
+                  <div className="px-6 pb-6 border-t border-gray-100">
+                    <div className="mt-4">
+                      <LecturerView
+                        lecturers={departmentLecturers}
+                        departments={departments}
+                        title=""
+                        showDepartment={false}
+                        emptyMessage="No lecturers in this department yet"
+                        onLecturerUpdate={fetchDepartmentData}
+                        currentUser={currentUser || undefined}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* Students Section */}
+            <div className="mb-6">
+              <div 
+                onClick={() => toggleSection('students')}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all"
+              >
+                <div className="px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Students</h3>
+                    <p className="text-sm text-gray-600">{departmentStudents.length} students in this department</p>
+                  </div>
+                  <span className={`text-gray-400 transition-transform duration-200 ${expandedSections.students ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </div>
+                
+                {expandedSections.students && (
+                  <div className="px-6 pb-6 border-t border-gray-100">
+                    <div className="mt-4">
+                      <StudentView
+                        students={departmentStudents}
+                        departments={departments}
+                        onStudentUpdate={fetchDepartmentData}
+                        currentUser={currentUser || undefined}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Departments Section */}
+            <div className="mb-6">
+              <div 
+                onClick={() => toggleSection('departments')}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all"
+              >
+                <div className="px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Departments</h3>
+                    <p className="text-sm text-gray-600">{departments.length} departments</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCreateDepartmentModal(true);
+                      }}
+                      className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      + Add
+                    </button>
+                    <span className={`text-gray-400 transition-transform duration-200 ${expandedSections.departments ? 'rotate-180' : ''}`}>
+                      ▼
+                    </span>
+                  </div>
+                </div>
+                
+                {expandedSections.departments && (
+                  <div className="px-6 pb-6 border-t border-gray-100">
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {departments.map(dept => (
+                        <button
+                          key={dept.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDepartmentId(dept.id);
+                          }}
+                          className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5 hover:shadow-md hover:border-blue-300 transition-all text-left group"
+                        >
+                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
+                            {dept.name}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">Click to view details</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-        {activeTab === 'lecturers' && (
-          <LecturerView
-            lecturers={allLecturers}
-            departments={departments}
-            title="Lecturers"
-            showDepartment={true}
-            emptyMessage="No lecturers registered yet"
-            onLecturerUpdate={fetchAllData}
-          />
-        )}
+            {/* Lecturers Section */}
+            <div className="mb-6">
+              <div 
+                onClick={() => toggleSection('lecturers')}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all"
+              >
+                <div className="px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">All Lecturers</h3>
+                    <p className="text-sm text-gray-600">{allLecturers.length} lecturers • {allLecturers.filter(l => !l.isActive).length} pending approval</p>
+                  </div>
+                  <span className={`text-gray-400 transition-transform duration-200 ${expandedSections.lecturers ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </div>
+                
+                {expandedSections.lecturers && (
+                  <div className="px-6 pb-6 border-t border-gray-100">
+                    <div className="mt-4">
+                      <LecturerView
+                        lecturers={allLecturers}
+                        departments={departments}
+                        title=""
+                        showDepartment={true}
+                        emptyMessage="No lecturers registered yet"
+                        onLecturerUpdate={fetchAllData}
+                        currentUser={currentUser || undefined}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-        {activeTab === 'students' && (
-          <StudentView
-            students={allStudents}
-            departments={departments}
-            // modules={modules}
-            // enrollments={enrollments}
-            // title="Students"
-            // showDepartment={true}
-            // showUsername={true}
-            // emptyMessage="No students registered yet"
-          />
+            {/* Students Section */}
+            <div className="mb-6">
+              <div 
+                onClick={() => toggleSection('students')}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all"
+              >
+                <div className="px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">All Students</h3>
+                    <p className="text-sm text-gray-600">{allStudents.length} students</p>
+                  </div>
+                  <span className={`text-gray-400 transition-transform duration-200 ${expandedSections.students ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </div>
+                
+                {expandedSections.students && (
+                  <div className="px-6 pb-6 border-t border-gray-100">
+                    <div className="mt-4">
+                      <StudentView
+                        students={allStudents}
+                        departments={departments}
+                        onStudentUpdate={fetchAllData}
+                        currentUser={currentUser || undefined}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
 
