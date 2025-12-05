@@ -18,7 +18,6 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'md
   }[maxWidth];
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    // Only close if clicking the backdrop itself, not the modal content
     if (e.target === e.currentTarget) {
       e.stopPropagation();
       onClose();
@@ -31,7 +30,6 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'md
   };
 
   const handleModalClick = (e: React.MouseEvent) => {
-    // Prevent clicks inside modal from propagating to backdrop
     e.stopPropagation();
   };
 

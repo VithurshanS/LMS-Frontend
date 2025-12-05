@@ -43,7 +43,6 @@ export default function LecturerDetailModal({
       const modules = await getModulesbyLecturerId(lecturer.id);
       setTeachingModules(modules);
     } catch (error) {
-      console.error('Failed to fetch teaching modules:', error);
     } finally {
       setLoading(false);
     }
@@ -67,7 +66,6 @@ export default function LecturerDetailModal({
         alert('Failed to approve lecturer. Please try again.');
       }
     } catch (error) {
-      console.error('Failed to approve lecturer:', error);
       alert('Failed to approve lecturer. Please try again.');
     } finally {
       setActionLoading(false);
@@ -96,7 +94,6 @@ export default function LecturerDetailModal({
         alert('Failed to ban lecturer. Please try again.');
       }
     } catch (error) {
-      console.error('Failed to ban lecturer:', error);
       alert('Failed to ban lecturer. Please try again.');
     } finally {
       setActionLoading(false);
@@ -141,7 +138,6 @@ export default function LecturerDetailModal({
             </div>
           </div>
 
-          {/* Teaching Modules */}
           <InfoCard
             title={`Teaching Modules (${teachingModules.length})`}
             action={{
@@ -205,10 +201,8 @@ export default function LecturerDetailModal({
             )}
           </InfoCard>
 
-          {/* Action Buttons */}
           {isAdmin && (
-            <div className="space-y-3 pt-4 border-t">
-              {/* Approve Button for Pending Lecturers */}
+          <div className="space-y-3 pt-4 border-t">
               {!lecturer.isActive && (
                 <button
                   onClick={handleApproveLecturer}
@@ -226,7 +220,6 @@ export default function LecturerDetailModal({
                 </button>
               )}
 
-              {/* Ban Button for Active Lecturers */}
               {lecturer.isActive && (
                 <>
                   <button
@@ -248,7 +241,6 @@ export default function LecturerDetailModal({
             </div>
           )}
 
-          {/* Close Button */}
           <div className="pt-4 border-t">
             <button
               onClick={onClose}
@@ -259,9 +251,8 @@ export default function LecturerDetailModal({
             </button>
           </div>
         </div>
-      )}
+        )}
 
-      {/* Module Detail Modal */}
       {selectedModule && (
         <ModuleDetailModal
           isOpen={showModuleModal}

@@ -124,7 +124,6 @@ export default function DepartmentDetailModal({
           </div>
         )}
 
-        {/* Close Button */}
         <div className="pt-4 border-t">
           <button
             onClick={onClose}

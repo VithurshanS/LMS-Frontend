@@ -32,7 +32,6 @@ export default function AdminDashboard() {
   const [isCreatingModule, setIsCreatingModule] = useState(false);
   const [isCreatingDepartment, setIsCreatingDepartment] = useState(false);
   
-  // Expandable sections state
   const [expandedSections, setExpandedSections] = useState({
     departments: true,
     lecturers: false,
@@ -68,10 +67,6 @@ export default function AdminDashboard() {
       getAllDepartmentStudents(selectedDepartmentId)
     ]);
     
-    console.log('Department Modules:', deptModules);
-    console.log('Department Lecturers:', deptLecturers);
-    console.log('Department Students:', deptStudents);
-    
     setDepartmentModules(deptModules);
     setDepartmentLecturers(deptLecturers);
     setDepartmentStudents(deptStudents);
@@ -85,10 +80,6 @@ export default function AdminDashboard() {
   const selectedDepartment = selectedDepartmentId 
     ? departments.find(d => d.id === selectedDepartmentId)
     : null;
-
-  // const departmentModules = selectedDepartmentId 
-  //   ? getDepartmentModules(selectedDepartmentId)
-  //   : [];
 
   const handleCreateDepartment = async () => {
     if (!newDepartmentName.trim()) {
@@ -106,15 +97,12 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Refetch all departments to update the list
       await fetchAllData();
 
-      // Reset form and close modal
       setNewDepartmentName('');
       setShowCreateDepartmentModal(false);
       alert('Department created successfully!');
     } catch (error) {
-      console.error('Error creating department:', error);
       alert('Failed to create department. Please try again.');
     } finally {
       setIsCreatingDepartment(false);
@@ -131,7 +119,6 @@ export default function AdminDashboard() {
 
     setIsCreatingModule(true);
     try {
-      // Step 1: Create the module
       const createdModule = await createModuleAPI({
         code: newModuleData.code.trim(),
         name: newModuleData.name.trim(),
@@ -146,7 +133,6 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Step 2: If lecturer is selected, assign them to the module
       if (newModuleData.lecturerId) {
         const assignSuccess = await assignLecturerToModule({
           moduleId: createdModule.id,
@@ -158,15 +144,12 @@ export default function AdminDashboard() {
         }
       }
 
-      // Step 3: Refetch department data to update the UI
       await fetchDepartmentData();
 
-      // Reset form and close modal
       setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
       setShowCreateModuleModal(false);
       alert('Module created successfully!');
     } catch (error) {
-      console.error('Error creating module:', error);
       alert('Failed to create module. Please try again.');
     } finally {
       setIsCreatingModule(false);
@@ -202,7 +185,6 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            {/* Modules Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('departments')}
@@ -301,7 +283,6 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <>
-            {/* Departments Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('departments')}

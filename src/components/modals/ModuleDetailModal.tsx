@@ -67,7 +67,6 @@ export default function ModuleDetailModal({
         getDepartmentById(updatedModule.departmentId)
       ];
 
-      // Only fetch students and department lecturers if needed
       if (showStudentsList) {
         fetchPromises.push(getEnrolledStudentsByModuleId(updatedModule.id));
       }
@@ -84,7 +83,6 @@ export default function ModuleDetailModal({
         departmentLecturers: allowLecturerAssignment ? results[showStudentsList ? 3 : 2] : []
       });
     } catch (error) {
-      console.error('Failed to fetch module details:', error);
     } finally {
       setLoading(false);
     }
@@ -105,7 +103,6 @@ export default function ModuleDetailModal({
         alert('Failed to assign lecturer. Please try again.');
       }
     } catch (error) {
-      console.error('Failed to assign lecturer:', error);
       alert('Failed to assign lecturer. Please try again.');
     } finally {
       setAssigning(false);
@@ -121,9 +118,7 @@ export default function ModuleDetailModal({
     try {
       const success = await unerrollFromModule({ studentId, moduleId: updatedModule.id });
       if (success) {
-        // Refresh module details to update the enrolled students list
         await fetchModuleDetails();
-        // Update the enrolled count
         setUpdatedModule(prev => ({
           ...prev,
           enrolledCount: Math.max(0, prev.enrolledCount - 1)
@@ -135,7 +130,6 @@ export default function ModuleDetailModal({
         alert('Failed to unenroll student. Please try again.');
       }
     } catch (error) {
-      console.error('Failed to unenroll student:', error);
       alert('Failed to unenroll student. Please try again.');
     } finally {
       setUnenrolling(null);

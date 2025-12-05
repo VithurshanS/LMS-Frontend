@@ -7,7 +7,6 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
 
-  // Handle navigation when user is authenticated
   useEffect(() => {
     if (currentUser && !isLoading) {
       const redirectPath = currentUser.role === 'ADMIN' ? '/admin' 
@@ -33,7 +32,6 @@ export default function LoginPage() {
     try {
       await loginWithOidc();
     } catch (error) {
-      console.error('OIDC login failed:', error);
       alert('SSO login failed. Please try again.');
     }
   };

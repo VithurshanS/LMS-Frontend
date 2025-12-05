@@ -50,7 +50,6 @@ export default function StudentDetailModal({
       setEnrolledModules(modules);
       setDepartment(dept || undefined);
     } catch (error) {
-      console.error('Failed to fetch student details:', error);
     } finally {
       setLoading(false);
     }
@@ -78,7 +77,6 @@ export default function StudentDetailModal({
         alert('Failed to ban student. Please try again.');
       }
     } catch (error) {
-      console.error('Failed to ban student:', error);
       alert('Failed to ban student. Please try again.');
     } finally {
       setActionLoading(false);
@@ -103,7 +101,6 @@ export default function StudentDetailModal({
         alert('Failed to unban student. Please try again.');
       }
     } catch (error) {
-      console.error('Failed to unban student:', error);
       alert('Failed to unban student. Please try again.');
     } finally {
       setActionLoading(false);
@@ -119,7 +116,6 @@ export default function StudentDetailModal({
     try {
       const success = await unerrollFromModule({ studentId: student.id, moduleId });
       if (success) {
-        // Refresh student details to update the enrolled modules list
         await fetchStudentDetails();
         if (onStudentUpdate) {
           onStudentUpdate();
@@ -128,7 +124,6 @@ export default function StudentDetailModal({
         alert('Failed to unenroll from module. Please try again.');
       }
     } catch (error) {
-      console.error('Failed to unenroll from module:', error);
       alert('Failed to unenroll from module. Please try again.');
     } finally {
       setUnenrolling(null);
@@ -252,10 +247,8 @@ export default function StudentDetailModal({
           )}
         </InfoCard>
 
-        {/* Action Buttons */}
         {isAdmin && (
           <div className="space-y-3 pt-4 border-t">
-            {/* Ban Button for Active Students */}
             {student.isActive && (
               <button
                 onClick={handleBanStudent}
@@ -273,7 +266,6 @@ export default function StudentDetailModal({
               </button>
             )}
 
-            {/* Unban Button for Inactive Students */}
             {!student.isActive && (
               <button
                 onClick={handleUnbanStudent}
@@ -293,7 +285,6 @@ export default function StudentDetailModal({
           </div>
         )}
 
-        {/* Close Button */}
         <div className="pt-4 border-t">
           <button
             onClick={onClose}
