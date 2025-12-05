@@ -110,6 +110,7 @@ export default function ModuleView({
         )}
       </div>
 
+
       {selectedModule && enableModal && (
         <ModuleDetailModal
           isOpen={showModal}

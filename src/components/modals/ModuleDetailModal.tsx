@@ -33,21 +33,29 @@ export default function ModuleDetailModal({
     enrolledStudents?: User[];
     departmentLecturers?: User[];
   }>({});
+  const [updatedModule, setUpdatedModule] = useState<Module>(module);
 
   useEffect(() => {
     if (isOpen && module) {
+      setUpdatedModule(module);
       fetchModuleDetails();
     }
   }, [isOpen, module.id]);
+
+  useEffect(() => {
+    if (updatedModule.lecturerId !== module.lecturerId) {
+      fetchModuleDetails();
+    }
+  }, [updatedModule.lecturerId]);
 
   const fetchModuleDetails = async () => {
     setLoading(true);
     try {
       const [lecturer, department, enrolledStudents, departmentLecturers] = await Promise.all([
-        module.lecturerId ? getLecturerById(module.lecturerId) : Promise.resolve(null),
-        getDepartmentById(module.departmentId),
-        getEnrolledStudentsByModuleId(module.id),
-        getAllDepartmentLecturers(module.departmentId)
+        updatedModule.lecturerId ? getLecturerById(updatedModule.lecturerId) : Promise.resolve(null),
+        getDepartmentById(updatedModule.departmentId),
+        getEnrolledStudentsByModuleId(updatedModule.id),
+        getAllDepartmentLecturers(updatedModule.departmentId)
       ]);
       
       setModuleDetails({
@@ -66,8 +74,9 @@ export default function ModuleDetailModal({
   const handleAssignLecturer = async (lecturerId: string) => {
     setAssigning(true);
     try {
-      const success = await assignLecturerToModule(module.id, lecturerId);
+      const success = await assignLecturerToModule({moduleId: updatedModule.id, lecturerId});
       if (success) {
+        setUpdatedModule(prev => ({ ...prev, lecturerId }));
         setShowLecturerSelect(false);
         await fetchModuleDetails();
         if (onModuleUpdate) {
@@ -84,8 +93,8 @@ export default function ModuleDetailModal({
     }
   };
 
-  const isFull = module.enrolledCount >= module.limit;
-  const percentFilled = (module.enrolledCount / module.limit) * 100;
+  const isFull = updatedModule.enrolledCount >= updatedModule.limit;
+  const percentFilled = (updatedModule.enrolledCount / updatedModule.limit) * 100;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Module Details" maxWidth="2xl">
@@ -98,8 +107,8 @@ export default function ModuleDetailModal({
           <div className="bg-gray-50 rounded-lg p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h4 className="text-2xl font-bold text-gray-900">{module.name}</h4>
-                <p className="text-sm text-gray-600 mt-1">{module.code}</p>
+                <h4 className="text-2xl font-bold text-gray-900">{updatedModule.name}</h4>
+                <p className="text-sm text-gray-600 mt-1">{updatedModule.code}</p>
               </div>
               <span className={`px-3 py-1 text-sm rounded-full ${
                 isFull ? 'bg-red-100 text-red-700' : 
@@ -113,11 +122,11 @@ export default function ModuleDetailModal({
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Enrolled Students</p>
-                <p className="text-2xl font-bold text-gray-900">{module.enrolledCount}</p>
+                <p className="text-2xl font-bold text-gray-900">{updatedModule.enrolledCount}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Student Limit</p>
-                <p className="text-2xl font-bold text-gray-900">{module.limit}</p>
+                <p className="text-2xl font-bold text-gray-900">{updatedModule.limit}</p>
               </div>
             </div>
 
@@ -139,7 +148,7 @@ export default function ModuleDetailModal({
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                {module.limit - module.enrolledCount} spots remaining
+                {updatedModule.limit - updatedModule.enrolledCount} spots remaining
               </p>
             </div>
           </div>

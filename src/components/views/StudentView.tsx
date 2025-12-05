@@ -1,83 +1,47 @@
 import { useState } from 'react';
-import { User, Department, Module, Enrollment } from '../../types';
+import { User, Department } from '../../types';
 import StudentDetailModal from '../modals/StudentDetailModal';
 
 interface StudentViewProps {
   students: User[];
   departments: Department[];
-  modules?: Module[];
-  enrollments?: Enrollment[];
-  title: string;
-  showDepartment?: boolean;
-  showUsername?: boolean;
-  showActions?: boolean;
-  onStudentClick?: (student: User) => void;
-  emptyMessage?: string;
-  className?: string;
-  enableModal?: boolean;
+  onStudentUpdate?: () => void;
 }
 
 export default function StudentView({
   students,
   departments,
-  modules = [],
-  enrollments = [],
-  title,
-  showDepartment = true,
-  showUsername = true,
-  showActions = false,
-  onStudentClick,
-  emptyMessage = "No students found",
-  className = "",
-  enableModal = true
+  onStudentUpdate
 }: StudentViewProps) {
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
 
   const handleStudentClick = (student: User) => {
-    if (onStudentClick) {
-      onStudentClick(student);
-    } else if (enableModal) {
-      setSelectedStudent(student);
-      setShowModal(true);
-    }
-  };
-
-  const getStudentModules = (studentId: string): Module[] => {
-    const studentEnrollments = enrollments.filter(e => e.studentId === studentId);
-    return studentEnrollments
-      .map(enrollment => modules.find(m => m.id === enrollment.moduleId))
-      .filter(Boolean) as Module[];
+    setSelectedStudent(student);
+    setShowModal(true);
   };
   if (students.length === 0) {
     return (
-      <div className={className}>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">{title}</h2>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Students</h2>
         <div className="bg-gray-50 rounded-lg p-8 text-center">
-          <p className="text-gray-600">{emptyMessage}</p>
+          <p className="text-gray-600">No students found</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={className}>
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">{title}</h2>
+    <div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Students</h2>
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              {showDepartment && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-              )}
-              {showUsername && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-              )}
-              {showActions && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              )}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -87,8 +51,8 @@ export default function StudentView({
               return (
                 <tr 
                   key={student.id} 
-                  className={`hover:bg-gray-50 ${(onStudentClick || enableModal) ? 'cursor-pointer' : ''}`}
-                  onClick={(onStudentClick || enableModal) ? () => handleStudentClick(student) : undefined}
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleStudentClick(student)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {student.firstName} {student.lastName}
@@ -96,29 +60,16 @@ export default function StudentView({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {student.email}
                   </td>
-                  {showDepartment && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {dept?.name || 'N/A'}
-                    </td>
-                  )}
-                  {showUsername && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {student.username}
-                    </td>
-                  )}
-                  {showActions && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStudentClick(student);
-                        }}
-                        className="text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  )}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {dept?.name || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      student.isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {student.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
                 </tr>
               );
             })}
@@ -126,13 +77,11 @@ export default function StudentView({
         </table>
       </div>
       
-
       <div className="mt-4 text-sm text-gray-600">
         <p>Total students: {students.length}</p>
       </div>
 
-
-      {selectedStudent && enableModal && (
+      {selectedStudent && (
         <StudentDetailModal
           isOpen={showModal}
           onClose={() => {
@@ -141,8 +90,6 @@ export default function StudentView({
           }}
           student={selectedStudent}
           department={departments.find(d => d.id === selectedStudent.departmentId)}
-          enrolledModules={getStudentModules(selectedStudent.id)}
-          enrollments={enrollments}
         />
       )}
     </div>

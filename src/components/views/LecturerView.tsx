@@ -115,6 +115,7 @@ export default function LecturerView({
           }}
           lecturer={selectedLecturer}
           department={departments.find(d => d.id === selectedLecturer.departmentId)}
+          onLecturerUpdate={onLecturerUpdate}
         />
       )}
     </div>

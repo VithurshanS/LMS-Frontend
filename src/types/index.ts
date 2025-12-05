@@ -48,4 +48,15 @@ export interface RegistrationRequest {
   departmentId:string;
 }
 
+export interface AssignmentRequest {
+  moduleId: string;
+  lecturerId: string;
+}
 
+export interface ModuleCreationRequest {
+  code: string;
+  name: string;
+  limit: number;
+  departmentId: string;
+  adminId: string;
+}

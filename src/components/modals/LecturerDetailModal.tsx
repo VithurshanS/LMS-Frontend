@@ -3,14 +3,14 @@ import { User, Department, Module } from '../../types';
 import Modal from './Modal';
 import ModuleDetailModal from './ModuleDetailModal';
 import { InfoCard } from '../ui';
-import { getModulesbyLecturerId } from '../../api/api';
+import { getModulesbyLecturerId, approveLecturer as approveLecturerAPI } from '../../api/api';
 
 interface LecturerDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   lecturer: User;
   department?: Department;
-  onApproveLecturer?: (lecturerId: string) => void;
+  onLecturerUpdate?: () => void;
 }
 
 export default function LecturerDetailModal({
@@ -18,9 +18,10 @@ export default function LecturerDetailModal({
   onClose,
   lecturer,
   department,
-  onApproveLecturer
+  onLecturerUpdate
 }: LecturerDetailModalProps) {
   const [loading, setLoading] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [showModules, setShowModules] = useState(false);
   const [teachingModules, setTeachingModules] = useState<Module[]>([]);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
@@ -41,6 +42,27 @@ export default function LecturerDetailModal({
       console.error('Failed to fetch teaching modules:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveLecturer = async () => {
+    setApproving(true);
+    try {
+      const success = await approveLecturerAPI(lecturer.id);
+      if (success) {
+        alert('Lecturer approved successfully!');
+        if (onLecturerUpdate) {
+          onLecturerUpdate();
+        }
+        onClose();
+      } else {
+        alert('Failed to approve lecturer. Please try again.');
+      }
+    } catch (error) {
+      console.error('Failed to approve lecturer:', error);
+      alert('Failed to approve lecturer. Please try again.');
+    } finally {
+      setApproving(false);
     }
   };
   
@@ -149,22 +171,28 @@ export default function LecturerDetailModal({
           {/* Action Buttons */}
           <div className="space-y-3 pt-4 border-t">
             {/* Approve Button for Pending Lecturers */}
-            {!lecturer.isActive && onApproveLecturer && (
+            {!lecturer.isActive && (
               <button
-                onClick={() => {
-                  onApproveLecturer(lecturer.id);
-                  onClose();
-                }}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                onClick={handleApproveLecturer}
+                disabled={approving}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                Approve Lecturer
+                {approving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Approving...
+                  </>
+                ) : (
+                  'Approve Lecturer'
+                )}
               </button>
             )}
 
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              disabled={approving}
+              className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               Close
             </button>

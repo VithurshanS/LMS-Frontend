@@ -1,25 +1,60 @@
-import { User, Department, Module, Enrollment } from '../../types';
+import { useState, useEffect } from 'react';
+import { User, Department, Module } from '../../types';
 import Modal from './Modal';
+import ModuleDetailModal from './ModuleDetailModal';
+import { InfoCard } from '../ui';
+import { getDepartmentById, getModulebyStudentId } from '../../api/api';
 
 interface StudentDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   student: User;
   department?: Department;
-  enrolledModules?: Module[];
-  enrollments?: Enrollment[];
 }
 
 export default function StudentDetailModal({
   isOpen,
   onClose,
   student,
-  department,
-  enrolledModules = [],
-  enrollments = []
+  department: propDepartment
 }: StudentDetailModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [showModules, setShowModules] = useState(false);
+  const [enrolledModules, setEnrolledModules] = useState<Module[]>([]);
+  const [department, setDepartment] = useState<Department | undefined>(propDepartment);
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
+  const [showModuleModal, setShowModuleModal] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && student) {
+      fetchStudentDetails();
+    }
+  }, [isOpen, student.id]);
+
+  const fetchStudentDetails = async () => {
+    setLoading(true);
+    try {
+      const [modules, dept] = await Promise.all([
+        getModulebyStudentId(student.id),
+        student.departmentId && !propDepartment ? getDepartmentById(student.departmentId) : Promise.resolve(propDepartment)
+      ]);
+      
+      setEnrolledModules(modules);
+      setDepartment(dept || undefined);
+    } catch (error) {
+      console.error('Failed to fetch student details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Student Details" maxWidth="2xl">
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
       <div className="space-y-6">
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="font-semibold text-gray-900 mb-3">Personal Information</h4>
@@ -52,59 +87,69 @@ export default function StudentDetailModal({
         </div>
 
 
-        <div>
-          <h4 className="font-semibold text-gray-900 mb-3">
-            Enrolled Modules ({enrolledModules.length})
-          </h4>
-          {enrolledModules.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-6 text-center">
-              <p className="text-gray-600">Not enrolled in any modules yet</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
+        <InfoCard
+          title={`Enrolled Modules (${enrolledModules.length})`}
+          action={{
+            label: showModules ? 'Hide Modules' : 'Show Modules',
+            onClick: () => setShowModules(!showModules)
+          }}
+        >
+          {showModules && enrolledModules.length === 0 && (
+            <p className="text-sm text-gray-500 py-2">Not enrolled in any modules yet</p>
+          )}
+
+          {showModules && enrolledModules.length > 0 && (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
               {enrolledModules.map((module) => {
-                const enrollment = enrollments.find(e => e.moduleId === module.id && e.studentId === student.id);
                 const isFull = module.enrolledCount >= module.limit;
+                const percentFilled = (module.enrolledCount / module.limit) * 100;
                 
                 return (
-                  <div key={module.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <button
+                    key={module.id}
+                    onClick={() => {
+                      setSelectedModule(module);
+                      setShowModuleModal(true);
+                    }}
+                    className="w-full bg-white border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer text-left"
+                  >
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h5 className="font-semibold text-gray-900">{module.name}</h5>
-                        <p className="text-sm text-gray-600">{module.code}</p>
+                        <p className="text-xs text-gray-600">{module.code}</p>
                       </div>
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                        isFull ? 'bg-red-100 text-red-700' : 
+                        percentFilled >= 80 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
                       }`}>
-                        {isFull ? 'Full' : 'Open'}
+                        {isFull ? 'Full' : percentFilled >= 80 ? 'Almost Full' : 'Open'}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-600 space-y-1">
+                    <div className="text-sm text-gray-600">
                       <p>Enrolled: {module.enrolledCount}/{module.limit} students</p>
-                      {/* {enrollment && (
-                        <p>Enrolled on: {new Date(enrollment.enrolledAt).toLocaleDateString()}</p>
-                      )} */}
                     </div>
                     <div className="mt-2">
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                           className={`h-2 rounded-full transition-all ${
-                            isFull ? 'bg-red-600' : 'bg-green-600'
+                            isFull ? 'bg-red-600' : 
+                            percentFilled >= 80 ? 'bg-yellow-600' :
+                            'bg-green-600'
                           }`}
                           style={{
-                            width: `${Math.min((module.enrolledCount / module.limit) * 100, 100)}%`
+                            width: `${Math.min(percentFilled, 100)}%`
                           }}
                         />
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           )}
-        </div>
+        </InfoCard>
 
-        {/* Close Button */}
         <div className="pt-4 border-t">
           <button
             onClick={onClose}
@@ -114,6 +159,19 @@ export default function StudentDetailModal({
           </button>
         </div>
       </div>
+      )}
+
+      {selectedModule && (
+        <ModuleDetailModal
+          isOpen={showModuleModal}
+          onClose={() => {
+            setShowModuleModal(false);
+            setSelectedModule(null);
+          }}
+          module={selectedModule}
+          onModuleUpdate={fetchStudentDetails}
+        />
+      )}
     </Modal>
   );
 }

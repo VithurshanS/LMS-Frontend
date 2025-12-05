@@ -14,6 +14,7 @@ interface CreateModuleModalProps {
   onModuleDataChange: (data: { code: string; name: string; lecturerId: string; limit: number }) => void;
   onSubmit: () => void;
   lecturers: User[];
+  isCreating?: boolean;
 }
 
 export default function CreateModuleModal({
@@ -23,7 +24,8 @@ export default function CreateModuleModal({
   moduleData,
   onModuleDataChange,
   onSubmit,
-  lecturers
+  lecturers,
+  isCreating = false
 }: CreateModuleModalProps) {
   const handleSubmit = () => {
     onSubmit();
@@ -50,6 +52,7 @@ export default function CreateModuleModal({
             onChange={(e) => onModuleDataChange({ ...moduleData, code: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="e.g., CS301"
+            disabled={isCreating}
           />
         </div>
         <div>
@@ -62,18 +65,20 @@ export default function CreateModuleModal({
             onChange={(e) => onModuleDataChange({ ...moduleData, name: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="e.g., Advanced Programming"
+            disabled={isCreating}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Assign Lecturer
+            Assign Lecturer <span className="text-gray-500 text-xs">(Optional)</span>
           </label>
           <select
             value={moduleData.lecturerId}
             onChange={(e) => onModuleDataChange({ ...moduleData, lecturerId: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={isCreating}
           >
-            <option value="">Select a lecturer</option>
+            <option value="">Select a lecturer (optional)</option>
             {lecturers.filter(l => l.isActive).map(lecturer => (
               <option key={lecturer.id} value={lecturer.id}>
                 {lecturer.firstName} {lecturer.lastName}
@@ -92,18 +97,28 @@ export default function CreateModuleModal({
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             min="1"
             max="100"
+            disabled={isCreating}
           />
         </div>
         <div className="flex space-x-3">
           <button
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={isCreating}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            Create Module
+            {isCreating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Creating...
+              </>
+            ) : (
+              'Create Module'
+            )}
           </button>
           <button
             onClick={handleClose}
-            className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            disabled={isCreating}
+            className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             Cancel
           </button>

@@ -11,12 +11,12 @@ import {
   CreateModuleModal 
 } from '../components';
 import { Department, Module, User } from '../types';
-import { getAllDepartments,getAllLecturers,getAllStudents,getDeptModuleDetails,getAllDepartmentLecturers,getAllDepartmentStudents } from '../api/api';
+import { getAllDepartments,getAllLecturers,getAllStudents,getDeptModuleDetails,getAllDepartmentLecturers,getAllDepartmentStudents, createModule as createModuleAPI, assignLecturerToModule, createDepartment as createDepartmentAPI } from '../api/api';
 
 type TabType = 'departments' | 'lecturers' | 'students';
 
 export default function AdminDashboard() {
-  const { currentUser, approveLecturer, createDepartment, createModule, modules, enrollments } = useAuth();
+  const { currentUser, approveLecturer } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('departments');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
   const [showCreateDepartmentModal, setShowCreateDepartmentModal] = useState(false);
@@ -34,6 +34,8 @@ export default function AdminDashboard() {
     lecturerId: '',
     limit: 30
   });
+  const [isCreatingModule, setIsCreatingModule] = useState(false);
+  const [isCreatingDepartment, setIsCreatingDepartment] = useState(false);
 
   
   // const [departments,setDepartments] = useState<Department[]>([])
@@ -42,22 +44,22 @@ export default function AdminDashboard() {
 
 
   useEffect(() => {
-    const fetchData = async () => {
-      if(currentUser != null && currentUser.role === 'ADMIN'){
-        const [depts, lects, studs] = await Promise.all([
-          getAllDepartments(),
-          getAllLecturers(),
-          getAllStudents()
-        ]);
-        
-        setDepartments(depts);
-        setAllLecturers(lects);
-        setAllStudents(studs);
-      }
-    };
-    
-    fetchData();
+    fetchAllData();
   }, [currentUser]);
+
+  const fetchAllData = async () => {
+    if(currentUser != null && currentUser.role === 'ADMIN'){
+      const [depts, lects, studs] = await Promise.all([
+        getAllDepartments(),
+        getAllLecturers(),
+        getAllStudents()
+      ]);
+      
+      setDepartments(depts);
+      setAllLecturers(lects);
+      setAllStudents(studs);
+    }
+  };
   
   const fetchDepartmentData = async () => {
     if (!selectedDepartmentId) return;
@@ -90,34 +92,87 @@ export default function AdminDashboard() {
   //   ? getDepartmentModules(selectedDepartmentId)
   //   : [];
 
-  const handleCreateDepartment = () => {
+  const handleCreateDepartment = async () => {
     if (!newDepartmentName.trim()) {
       alert('Department name is required');
       return;
     }
-    createDepartment(newDepartmentName.trim());
-    setNewDepartmentName('');
-    setShowCreateDepartmentModal(false);
+
+    setIsCreatingDepartment(true);
+    try {
+      const createdDepartment = await createDepartmentAPI(newDepartmentName.trim());
+      
+      if (!createdDepartment) {
+        alert('Failed to create department. Please try again.');
+        setIsCreatingDepartment(false);
+        return;
+      }
+
+      // Refetch all departments to update the list
+      await fetchAllData();
+
+      // Reset form and close modal
+      setNewDepartmentName('');
+      setShowCreateDepartmentModal(false);
+      alert('Department created successfully!');
+    } catch (error) {
+      console.error('Error creating department:', error);
+      alert('Failed to create department. Please try again.');
+    } finally {
+      setIsCreatingDepartment(false);
+    }
   };
 
-  const handleCreateModule = () => {
-    if (!selectedDepartmentId) return;
+  const handleCreateModule = async () => {
+    if (!selectedDepartmentId || !currentUser) return;
     
-    if (!newModuleData.code.trim() || !newModuleData.name.trim() || !newModuleData.lecturerId) {
-      alert('All fields are required');
+    if (!newModuleData.code.trim() || !newModuleData.name.trim()) {
+      alert('Module code and name are required');
       return;
     }
 
-    createModule({
-      code: newModuleData.code.trim(),
-      name: newModuleData.name.trim(),
-      departmentId: selectedDepartmentId,
-      lecturerId: newModuleData.lecturerId,
-      limit: newModuleData.limit
-    });
+    setIsCreatingModule(true);
+    try {
+      // Step 1: Create the module
+      const createdModule = await createModuleAPI({
+        code: newModuleData.code.trim(),
+        name: newModuleData.name.trim(),
+        departmentId: selectedDepartmentId,
+        limit: newModuleData.limit,
+        adminId: currentUser.id
+      });
 
-    setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
-    setShowCreateModuleModal(false);
+      if (!createdModule) {
+        alert('Failed to create module. Please try again.');
+        setIsCreatingModule(false);
+        return;
+      }
+
+      // Step 2: If lecturer is selected, assign them to the module
+      if (newModuleData.lecturerId) {
+        const assignSuccess = await assignLecturerToModule({
+          moduleId: createdModule.id,
+          lecturerId: newModuleData.lecturerId
+        });
+
+        if (!assignSuccess) {
+          alert('Module created but failed to assign lecturer. You can assign them later.');
+        }
+      }
+
+      // Step 3: Refetch department data to update the UI
+      await fetchDepartmentData();
+
+      // Reset form and close modal
+      setNewModuleData({ code: '', name: '', lecturerId: '', limit: 30 });
+      setShowCreateModuleModal(false);
+      alert('Module created successfully!');
+    } catch (error) {
+      console.error('Error creating module:', error);
+      alert('Failed to create module. Please try again.');
+    } finally {
+      setIsCreatingModule(false);
+    }
   };
 
   const tabs = [
@@ -173,18 +228,19 @@ export default function AdminDashboard() {
                     title="Lecturers"
                     showDepartment={false}
                     emptyMessage="No lecturers in this department yet"
+                    onLecturerUpdate={fetchDepartmentData}
                   />
                 </div>
 
                 <StudentView
                   students={departmentStudents}
                   departments={departments}
-                  modules={modules}
-                  enrollments={enrollments}
-                  title="Students in Department"
-                  showDepartment={false}
-                  showUsername={true}
-                  emptyMessage="No students in this department yet"
+                  // modules={modules}
+                  // enrollments={enrollments}
+                  // title="Students in Department"
+                  // showDepartment={false}
+                  // showUsername={true}
+                  // emptyMessage="No students in this department yet"
                 />
               </div>
             ) : (
@@ -228,6 +284,7 @@ export default function AdminDashboard() {
             title="Lecturers"
             showDepartment={true}
             emptyMessage="No lecturers registered yet"
+            onLecturerUpdate={fetchAllData}
           />
         )}
 
@@ -235,12 +292,12 @@ export default function AdminDashboard() {
           <StudentView
             students={allStudents}
             departments={departments}
-            modules={modules}
-            enrollments={enrollments}
-            title="Students"
-            showDepartment={true}
-            showUsername={true}
-            emptyMessage="No students registered yet"
+            // modules={modules}
+            // enrollments={enrollments}
+            // title="Students"
+            // showDepartment={true}
+            // showUsername={true}
+            // emptyMessage="No students registered yet"
           />
         )}
       </div>
@@ -255,6 +312,7 @@ export default function AdminDashboard() {
         departmentName={newDepartmentName}
         onDepartmentNameChange={setNewDepartmentName}
         onSubmit={handleCreateDepartment}
+        isCreating={isCreatingDepartment}
       />
 
 
@@ -269,6 +327,7 @@ export default function AdminDashboard() {
         onModuleDataChange={setNewModuleData}
         onSubmit={handleCreateModule}
         lecturers={departmentLecturers}
+        isCreating={isCreatingModule}
       />
     </DashboardLayout>
   );

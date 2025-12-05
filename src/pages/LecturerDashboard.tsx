@@ -87,12 +87,11 @@ export default function LecturerDashboard() {
         <StudentView
           students={allEnrolledStudents}
           departments={departments}
-          modules={modules}
-          enrollments={enrollments}
-          title="Students in My Modules"
-          showDepartment={true}
-          showUsername={false}
-          emptyMessage="No students enrolled in your modules yet"
+          // enrollments={enrollments}
+          // title="Students in My Modules"
+          // showDepartment={true}
+          // showUsername={false}
+          // emptyMessage="No students enrolled in your modules yet"
         />
       </section>
 
@@ -101,12 +100,12 @@ export default function LecturerDashboard() {
         <StudentView
           students={departmentStudents}
           departments={departments}
-          modules={modules}
-          enrollments={enrollments}
-          title={`Students in ${department?.name || 'Department'}`}
-          showDepartment={false}
-          showUsername={true}
-          emptyMessage="No students in your department yet"
+          // modules={modules}
+          // enrollments={enrollments}
+          // title={`Students in ${department?.name || 'Department'}`}
+          // showDepartment={false}
+          // showUsername={true}
+          // emptyMessage="No students in your department yet"
         />
       </section>
     </DashboardLayout>

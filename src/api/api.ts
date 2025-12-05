@@ -1,5 +1,5 @@
 import apiClient from './axiosConfig';
-import { User, RegistrationRequest, Department, Module } from '../types';
+import { User, RegistrationRequest, Department, Module, AssignmentRequest,ModuleCreationRequest } from '../types';
 
 
 export const GetUser = async (): Promise<User | null> => {
@@ -124,9 +124,10 @@ export const getEnrolledStudentsByModuleId = async (moduleId: string): Promise<U
     }
 }
 
-export const assignLecturerToModule = async (moduleId: string, lecturerId: string): Promise<boolean> => {
+export const assignLecturerToModule = async (assignmentRequest: AssignmentRequest): Promise<boolean> => {
     try {
-        const response = await apiClient.put(`/api/admin/assign-lecturer/${moduleId}/${lecturerId}`);
+        const response = await apiClient.patch(`/api/admin/assign-lecturer`,assignmentRequest);
+        console.log(response);
         return response.status >= 200 && response.status < 300;
     } catch (error) {
         console.error('Failed to assign lecturer to module:', error);
@@ -141,5 +142,54 @@ export const getModulesbyLecturerId = async (lecturerId: string): Promise<Module
     } catch (error) {
         console.error('Failed to get modules by lecturer:', error);
         return [];
+    }
+}
+
+export const getModulebyStudentId = async (studentId: string): Promise<Module[]> => {
+    try {
+        const response = await apiClient.get(`/api/student/enrollments/${studentId}`);
+        console.log('Modules by student response:', response);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to get modules by student:', error);
+        return [];
+    }
+}
+
+export const createModule = async (moduleData: ModuleCreationRequest): Promise<Module | null> => {
+    try {
+        const response = await apiClient.post('/api/admin/create-module', moduleData);
+        if (response.status === 201){
+            console.log('Module created successfully:', response.data);
+            return response.data;
+        }
+        return response.data;
+    } catch (error) {
+        console.error('Failed to create module:', error);
+        return null;
+    }
+}
+
+export const createDepartment = async (name: string): Promise<Department | null> => {
+    try {
+        const response = await apiClient.post('/api/admin/create-dept', { name });
+        if (response.status === 201){
+            console.log('Department created successfully:', response.data);
+            return response.data;
+        }
+        return response.data;
+    } catch (error) {
+        console.error('Failed to create department:', error);
+        return null;
+    }
+}
+
+export const approveLecturer = async (lecturerId: string): Promise<boolean> => {
+    try {
+        const response = await apiClient.patch(`/api/admin/approve-lecturer/`, { lecturerId });
+        return response.status >= 200 && response.status < 300;
+    } catch (error) {
+        console.error('Failed to approve lecturer:', error);
+        return false;
     }
 }
