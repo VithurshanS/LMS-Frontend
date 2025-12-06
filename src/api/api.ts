@@ -1,5 +1,5 @@
 import apiClient from './axiosConfig';
-import { User, RegistrationRequest, Department, Module, AssignmentRequest,ModuleCreationRequest,EnrollmentRequest,ControllUserRequest } from '../types';
+import { User, RegistrationRequest, Department, Module, AssignmentRequest,ModuleCreationRequest,EnrollmentRequest,ControllUserRequest, MeetingResponse } from '../types';
 
 
 export const GetUser = async (): Promise<User | null> => {
@@ -181,5 +181,14 @@ export const unerrollFromModule = async (enrollmentRequest: EnrollmentRequest): 
         return response.status >= 200 && response.status < 300;
     } catch (error) {
         return false;
+    }
+}
+
+export const createMeeting = async (moduleId: string): Promise<MeetingResponse | null> => {
+    try {
+        const response = await apiClient.get(`/api/meet/create/${moduleId}`);
+        return response.data;
+    } catch (error) {
+        return null;
     }
 }

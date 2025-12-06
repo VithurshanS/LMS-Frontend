@@ -1,4 +1,4 @@
-import { Module, User } from '../types';
+import { Module, User } from '../../types';
 
 interface ModuleCardProps {
   module: Module;
@@ -8,6 +8,9 @@ interface ModuleCardProps {
   actionButton?: React.ReactNode;
   onClick?: () => void;
   onViewStudents?: () => void;
+  showMeetingButton?: boolean;
+  userRole?: 'LECTURER' | 'STUDENT';
+  onJoinMeeting?: () => void;
 }
 
 export default function ModuleCard({ 
@@ -17,7 +20,10 @@ export default function ModuleCard({
   showProgress = true,
   actionButton,
   onClick,
-  onViewStudents
+  onViewStudents,
+  showMeetingButton = false,
+  userRole,
+  onJoinMeeting
 }: ModuleCardProps) {
   const hasLecturer = module.lecturerId;
   const isNotReady = !hasLecturer;
@@ -84,6 +90,22 @@ export default function ModuleCard({
           className="w-full mb-3 px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium"
         >
           See Enrolled Students ({module.enrolledCount})
+        </button>
+      )}
+
+      {showMeetingButton && onJoinMeeting && !isNotReady && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onJoinMeeting();
+          }}
+          className={`w-full mb-3 px-4 py-2 text-sm rounded-lg transition-colors font-medium ${
+            userRole === 'LECTURER'
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {userRole === 'LECTURER' ? '🎥 Start Meeting' : '🎥 Join Meeting'}
         </button>
       )}
 

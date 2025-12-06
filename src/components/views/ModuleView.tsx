@@ -11,6 +11,8 @@ interface ModuleViewProps {
   enableModal?: boolean;
   onModuleUpdate?: () => void;
   currentUser?: User;
+  showMeetingButton?: boolean;
+  onJoinMeeting?: (module: Module) => void;
 }
 
 export default function ModuleView({
@@ -21,7 +23,9 @@ export default function ModuleView({
   className = "",
   enableModal = true,
   onModuleUpdate,
-  currentUser
+  currentUser,
+  showMeetingButton = false,
+  onJoinMeeting
 }: ModuleViewProps) {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -59,6 +63,7 @@ export default function ModuleView({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Enrolled</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Limit</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              {showMeetingButton && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Meeting</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -103,6 +108,25 @@ export default function ModuleView({
                       )}
                     </div>
                   </td>
+                  {showMeetingButton && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {!isNotReady && onJoinMeeting && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onJoinMeeting(module);
+                          }}
+                          className={`px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-colors ${
+                            currentUser?.role === 'LECTURER' 
+                              ? 'bg-green-600 hover:bg-green-700' 
+                              : 'bg-blue-600 hover:bg-blue-700'
+                          }`}
+                        >
+                          🎥 {currentUser?.role === 'LECTURER' ? 'Start Meeting' : 'Join Meeting'}
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -129,6 +153,7 @@ export default function ModuleView({
           module={selectedModule}
           onModuleUpdate={onModuleUpdate}
           currentUser={currentUser}
+          onJoinMeeting={onJoinMeeting}
         />
       )}
     </div>

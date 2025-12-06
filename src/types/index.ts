@@ -71,3 +71,11 @@ export interface ControllUserRequest {
   control: "BAN"|"UNBAN";
   role:"student"|"lecturer";
 }
+
+export interface MeetingResponse {
+  token: string;
+  roomName: string;
+  displayName: string;
+  email: string;
+  role: 'LECTURER' | 'STUDENT';
+}

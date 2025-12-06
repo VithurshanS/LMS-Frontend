@@ -46,6 +46,10 @@ export default function LecturerDashboard() {
     }
   };
 
+  const handleJoinMeeting = (module: Module) => {
+    navigate(`/meeting?moduleId=${module.id}`, { state: { module } });
+  };
+
   if (!currentUser || currentUser.role !== 'LECTURER') {
     return null;
   }
@@ -109,6 +113,7 @@ export default function LecturerDashboard() {
           emptyMessage="No modules assigned yet"
           onModuleUpdate={fetchDashboardData}
           currentUser={currentUser || undefined}
+          onJoinMeeting={handleJoinMeeting}
         />
       </section>
 

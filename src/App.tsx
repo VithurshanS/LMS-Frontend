@@ -6,6 +6,7 @@ import CallbackPage from './pages/CallbackPage';
 import AdminDashboard from './pages/AdminDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import LecturerDashboard from './pages/LecturerDashboard';
+import MeetingPage from './pages/MeetingPage';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
   const { currentUser, isLoading } = useAuth();
@@ -75,6 +76,13 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['LECTURER']}>
               <LecturerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/meeting"
+          element={
+            <ProtectedRoute allowedRoles={['LECTURER', 'STUDENT']}>
+              <MeetingPage />
             </ProtectedRoute>
           }
         />

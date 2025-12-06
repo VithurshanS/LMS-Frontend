@@ -45,6 +45,10 @@ export default function StudentDashboard() {
     }
   };
 
+  const handleJoinMeeting = (module: Module) => {
+    navigate(`/meeting?moduleId=${module.id}`, { state: { module } });
+  };
+
   if (!currentUser || currentUser.role !== 'STUDENT') {
     return null;
   }
@@ -211,6 +215,7 @@ export default function StudentDashboard() {
           allowLecturerAssignment={false}
           onModuleUpdate={fetchDashboardData}
           currentUser={currentUser || undefined}
+          onJoinMeeting={handleJoinMeeting}
         />
       )}
     </DashboardLayout>

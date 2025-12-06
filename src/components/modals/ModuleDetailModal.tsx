@@ -15,6 +15,7 @@ interface ModuleDetailModalProps {
   allowLecturerClick?: boolean;
   allowLecturerAssignment?: boolean;
   currentUser?: User;
+  onJoinMeeting?: (module: Module) => void;
 }
 
 export default function ModuleDetailModal({ 
@@ -25,7 +26,8 @@ export default function ModuleDetailModal({
   showStudentsList = true,
   allowLecturerClick = true,
   allowLecturerAssignment = true,
-  currentUser
+  currentUser,
+  onJoinMeeting
 }: ModuleDetailModalProps) {
   const [loading, setLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
@@ -295,6 +297,22 @@ export default function ModuleDetailModal({
             <InfoCard title="Department">
               <p className="text-gray-700">{moduleDetails.department.name}</p>
             </InfoCard>
+          )}
+
+          {/* Meeting Button */}
+          {onJoinMeeting && hasLecturer && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <button
+                onClick={() => onJoinMeeting(updatedModule)}
+                className={`w-full px-4 py-3 text-white rounded-lg font-medium transition-colors ${
+                  currentUser?.role === 'LECTURER' 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                🎥 {currentUser?.role === 'LECTURER' ? 'Start Meeting' : 'Join Meeting'}
+              </button>
+            </div>
           )}
 
  
