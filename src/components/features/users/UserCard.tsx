@@ -1,4 +1,4 @@
-import { User, Department } from '../../types';
+import { User, Department } from '../../../types';
 
 interface UserCardProps {
   user: User;

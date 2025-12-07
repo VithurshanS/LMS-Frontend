@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { User, Department, Module } from '../../types';
-import Modal from './Modal';
-import ModuleDetailModal from './ModuleDetailModal';
-import { InfoCard } from '../ui';
-import { getModulesbyLecturerId, controlUserAccess } from '../../api/api';
+import { User, Department, Module } from '../../../types';
+import Modal from '../../common/Modal';
+import ModuleDetailModal from '../modules/ModuleDetailModal';
+import { InfoCard } from '../../common';
+import { getModulesbyLecturerId, controlUserAccess } from '../../../api/services';
 
 interface LecturerDetailModalProps {
   isOpen: boolean;

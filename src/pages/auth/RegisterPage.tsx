@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { RegistrationRequest, Role } from '../types';
+import { useAuth } from '../../context/AuthContext';
+import { RegistrationRequest, Role } from '../../types';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegistrationRequest>({

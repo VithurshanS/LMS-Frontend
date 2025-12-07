@@ -33,7 +33,6 @@ export default function MeetingRoom({
   const jitsiDomain = 'jit.shancloudservice.com';
 
   useEffect(() => {
-    // Prevent duplicate initialization
     if (isInitializing.current || apiRef.current) {
       return;
     }
@@ -62,7 +61,6 @@ export default function MeetingRoom({
 
         if (!jitsiContainerRef.current) return;
 
-        // Prevent multiple initializations
         if (apiRef.current) {
           apiRef.current.dispose();
           apiRef.current = null;
@@ -83,16 +81,12 @@ export default function MeetingRoom({
             startWithVideoMuted: true,
             prejoinPageEnabled: false,
             disableDeepLinking: true,
-            
-            // Lecturer permissions
             ...(isLecturer && {
               enableRecording: true,
               enableLiveStreaming: true,
               enableKickParticipants: true,
               enableMuteAll: true,
             }),
-            
-            // Student restrictions
             ...(!isLecturer && {
               enableRecording: false,
               enableLiveStreaming: false,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Module, User } from '../../types';
-import ModuleDetailModal from '../modals/ModuleDetailModal';
+import { Module, User } from '../../../types';
+import ModuleDetailModal from './ModuleDetailModal';
 
 interface ModuleViewProps {
   modules: Module[];

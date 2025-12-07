@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { UserManager, UserManagerSettings } from 'oidc-client-ts';
 import { User, Department, RegistrationRequest } from '../types';
-import { getAllDepartments, GetUser, registerUser } from '../api/api';
+import { getAllDepartments, GetUser, registerUser } from '../api/services';
 
 export const oidcConfig: UserManagerSettings = {
   authority: 'http://localhost:8080/realms/ironone',

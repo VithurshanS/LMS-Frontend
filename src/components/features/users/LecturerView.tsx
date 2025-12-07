@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { User, Department } from '../../types';
-import LecturerDetailModal from '../modals/LecturerDetailModal';
+import { User, Department } from '../../../types';
+import LecturerDetailModal from './LecturerDetailModal';
 
 interface LecturerViewProps {
   lecturers: User[];

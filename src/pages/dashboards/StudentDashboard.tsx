@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { DashboardLayout, ModuleCard, EmptyState, ModuleDetailModal } from '../components';
-import { Module, Department } from '../types';
-import { getModulebyStudentId, getDeptModuleDetails, getDepartmentById, enrolltoModule } from '../api/api';
+import { useAuth } from '../../context/AuthContext';
+import { DashboardLayout, ModuleCard, EmptyState, ModuleDetailModal } from '../../components';
+import { Module, Department } from '../../types';
+import { getModulebyStudentId, getDeptModuleDetails, getDepartmentById, enrolltoModule } from '../../api/services';
 
 export default function StudentDashboard() {
   const { currentUser } = useAuth();
@@ -99,7 +99,6 @@ export default function StudentDashboard() {
         )
       }
     >
-      {/* Profile Section */}
       <section className="bg-white rounded-lg shadow p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile</h2>
         <div className="space-y-2 text-sm">
@@ -126,7 +125,7 @@ export default function StudentDashboard() {
         </div>
       </section>
 
-      {/* Enrolled Modules Section */}
+
       <section className="mb-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">My Enrolled Modules</h2>
         {enrolledModules.length === 0 ? (
@@ -154,7 +153,6 @@ export default function StudentDashboard() {
         )}
       </section>
 
-      {/* Available Modules Section */}
       <section>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Modules</h2>
         {availableModules.length === 0 ? (
@@ -201,7 +199,6 @@ export default function StudentDashboard() {
         )}
       </section>
 
-      {/* Module Detail Modal */}
       {selectedModule && (
         <ModuleDetailModal
           isOpen={showModuleModal}

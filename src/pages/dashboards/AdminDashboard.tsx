@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   DashboardLayout, 
   StudentView, 
@@ -7,9 +7,9 @@ import {
   ModuleView, 
   CreateDepartmentModal, 
   CreateModuleModal 
-} from '../components';
-import { Department, Module, User } from '../types';
-import { getAllDepartments,getAllLecturers,getAllStudents,getDeptModuleDetails,getAllDepartmentLecturers,getAllDepartmentStudents, createModule as createModuleAPI, assignLecturerToModule, createDepartment as createDepartmentAPI } from '../api/api';
+} from '../../components';
+import { Department, Module, User } from '../../types';
+import { getAllDepartments,getAllLecturers,getAllStudents,getDeptModuleDetails,getAllDepartmentLecturers,getAllDepartmentStudents, createModule as createModuleAPI, assignLecturerToModule, createDepartment as createDepartmentAPI } from '../../api/services';
 
 export default function AdminDashboard() {
   const { currentUser } = useAuth();
@@ -216,7 +216,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Lecturers Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('lecturers')}
@@ -250,7 +249,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Students Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('students')}
@@ -333,7 +331,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Lecturers Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('lecturers')}
@@ -367,7 +364,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Students Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('students')}

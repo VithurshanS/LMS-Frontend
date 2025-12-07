@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import MeetingRoom from '../components/MeetingRoom';
-import { createMeeting } from '../api/api';
+import MeetingRoom from '../components/features/meeting/MeetingRoom';
+import { createMeeting } from '../api/services';
 import { MeetingResponse, Module } from '../types';
 
 export default function MeetingPage() {
@@ -40,10 +40,9 @@ export default function MeetingPage() {
 
   const handleLeave = () => {
     setMeetingData(null);
-    navigate(-1); // Go back to previous page
+    navigate(-1);
   };
 
-  // If meeting data exists, show meeting room
   if (meetingData) {
     return (
       <MeetingRoom
@@ -57,7 +56,6 @@ export default function MeetingPage() {
     );
   }
 
-  // Show loading or error state
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">

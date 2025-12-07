@@ -1,4 +1,4 @@
-import { Module, User } from '../../types';
+import { Module, User } from '../../../types';
 
 interface ModuleCardProps {
   module: Module;

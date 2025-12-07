@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Module, User, Department } from '../../types';
-import Modal from './Modal';
-import StudentDetailModal from './StudentDetailModal';
-import LecturerDetailModal from './LecturerDetailModal';
-import { InfoCard, UserAvatar, UserListItem } from '../ui';
-import { getLecturerById, getDepartmentById, getEnrolledStudentsByModuleId, getAllDepartmentLecturers, assignLecturerToModule, unerrollFromModule } from '../../api/api';
+import { Module, User, Department } from '../../../types';
+import Modal from '../../common/Modal';
+import StudentDetailModal from '../users/StudentDetailModal';
+import LecturerDetailModal from '../users/LecturerDetailModal';
+import { InfoCard, UserAvatar, UserListItem } from '../../common';
+import { getLecturerById, getDepartmentById, getEnrolledStudentsByModuleId, getAllDepartmentLecturers, assignLecturerToModule, unerrollFromModule } from '../../../api/services';
 
 interface ModuleDetailModalProps {
   isOpen: boolean;

@@ -1,5 +1,5 @@
-import Modal from './Modal';
-import { User } from '../../types';
+import Modal from '../../common/Modal';
+import { User } from '../../../types';
 
 interface CreateModuleModalProps {
   isOpen: boolean;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { User, Department } from '../../types';
-import StudentDetailModal from '../modals/StudentDetailModal';
+import { User, Department } from '../../../types';
+import StudentDetailModal from './StudentDetailModal';
 
 interface StudentViewProps {
   students: User[];

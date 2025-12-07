@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   DashboardLayout, 
   StudentView, 
   ModuleView 
-} from '../components';
-import { Module, Department } from '../types';
-import { getModulesbyLecturerId, getDepartmentById, getAllDepartmentStudents } from '../api/api';
+} from '../../components';
+import { Module, Department } from '../../types';
+import { getModulesbyLecturerId, getDepartmentById, getAllDepartmentStudents } from '../../api/services';
 
 export default function LecturerDashboard() {
   const { currentUser } = useAuth();
@@ -75,7 +75,6 @@ export default function LecturerDashboard() {
         )
       }
     >
-      {/* Profile Section */}
       <section className="bg-white rounded-lg shadow p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile</h2>
         <div className="space-y-2 text-sm">
@@ -117,7 +116,6 @@ export default function LecturerDashboard() {
         />
       </section>
 
-      {/* Department Students Section */}
       <section>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
           Students in {department?.name || 'Department'}

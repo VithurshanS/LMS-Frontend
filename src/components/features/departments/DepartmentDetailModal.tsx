@@ -1,5 +1,5 @@
-import { Department, User, Module } from '../../types';
-import Modal from './Modal';
+import { Department, User, Module } from '../../../types';
+import Modal from '../../common/Modal';
 
 interface DepartmentDetailModalProps {
   isOpen: boolean;

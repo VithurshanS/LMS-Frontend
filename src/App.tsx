@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import CallbackPage from './pages/CallbackPage';
-import AdminDashboard from './pages/AdminDashboard';
-import StudentDashboard from './pages/StudentDashboard';
-import LecturerDashboard from './pages/LecturerDashboard';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import CallbackPage from './pages/auth/CallbackPage';
+import AdminDashboard from './pages/dashboards/AdminDashboard';
+import StudentDashboard from './pages/dashboards/StudentDashboard';
+import LecturerDashboard from './pages/dashboards/LecturerDashboard';
 import MeetingPage from './pages/MeetingPage';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {

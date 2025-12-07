@@ -1,4 +1,4 @@
-import apiClient from './axiosConfig';
+import apiClient from './client';
 import { User, RegistrationRequest, Department, Module, AssignmentRequest,ModuleCreationRequest,EnrollmentRequest,ControllUserRequest, MeetingResponse } from '../types';
 
 
