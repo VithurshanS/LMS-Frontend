@@ -50,7 +50,7 @@ export default function LoginPage() {
           <div className="space-y-6">
             <div className="text-center">
               <p className="text-gray-600 mb-6">
-                Sign in with your organization account
+                Sign in with your account
               </p>
               <button
                 onClick={handleOidcLogin}
