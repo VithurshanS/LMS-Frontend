@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Department, Module } from '../../../types';
 import Modal from '../../common/Modal';
 import ModuleDetailModal from '../modules/ModuleDetailModal';
-import { InfoCard } from '../../common';
+import InfoCard from '../../common/InfoCard';
 import { getDepartmentById, getModulebyStudentId, controlUserAccess, unerrollFromModule } from '../../../api/services';
 
 interface StudentDetailModalProps {

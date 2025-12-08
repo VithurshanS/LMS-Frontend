@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import StudentView from '../../components/features/users/StudentView';
-import ModuleView from '../../components/features/modules/ModuleView';
-import { Module, Department } from '../../types';
-import { getModulesbyLecturerId, getDepartmentById, getAllDepartmentStudents } from '../../api/services';
+import { useAuth } from '../context/AuthContext';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import StudentView from '../components/features/users/StudentView';
+import ModuleView from '../components/features/modules/ModuleView';
+import { Module, Department } from '../types';
+import { getModulesbyLecturerId, getDepartmentById, getAllDepartmentStudents } from '../api/services';
 
 export default function LecturerDashboard() {
   const { currentUser } = useAuth();
@@ -44,10 +44,6 @@ export default function LecturerDashboard() {
     }
   };
 
-  const handleJoinMeeting = (module: Module) => {
-    navigate(`/meeting?moduleId=${module.id}`, { state: { module } });
-  };
-
   if (!currentUser || currentUser.role !== 'LECTURER') {
     return null;
   }
@@ -73,6 +69,7 @@ export default function LecturerDashboard() {
         )
       }
     >
+      {/* Profile Section */}
       <section className="bg-white rounded-lg shadow p-6 mb-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile</h2>
         <div className="space-y-2 text-sm">
@@ -110,10 +107,10 @@ export default function LecturerDashboard() {
           emptyMessage="No modules assigned yet"
           onModuleUpdate={fetchDashboardData}
           currentUser={currentUser || undefined}
-          onJoinMeeting={handleJoinMeeting}
         />
       </section>
 
+      {/* Department Students Section */}
       <section>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
           Students in {department?.name || 'Department'}

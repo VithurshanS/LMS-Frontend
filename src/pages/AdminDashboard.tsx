@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import StudentView from '../../components/features/users/StudentView';
-import LecturerView from '../../components/features/users/LecturerView';
-import ModuleView from '../../components/features/modules/ModuleView';
-import CreateDepartmentModal from '../../components/features/departments/CreateDepartmentModal';
-import CreateModuleModal from '../../components/features/departments/CreateModuleModal';
-import { Department, Module, User } from '../../types';
-import { getAllDepartments,getAllLecturers,getAllStudents,getDeptModuleDetails,getAllDepartmentLecturers,getAllDepartmentStudents, createModule as createModuleAPI, assignLecturerToModule, createDepartment as createDepartmentAPI } from '../../api/services';
+import { useAuth } from '../context/AuthContext';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import StudentView from '../components/features/users/StudentView';
+import LecturerView from '../components/features/users/LecturerView';
+import ModuleView from '../components/features/modules/ModuleView';
+import CreateDepartmentModal from '../components/features/departments/CreateDepartmentModal';
+import CreateModuleModal from '../components/features/departments/CreateModuleModal';
+import { Department, Module, User } from '../types';
+import { getAllDepartments,getAllLecturers,getAllStudents,getDeptModuleDetails,getAllDepartmentLecturers,getAllDepartmentStudents, createModule as createModuleAPI, assignLecturerToModule, createDepartment as createDepartmentAPI } from '../api/services';
 
 export default function AdminDashboard() {
   const { currentUser } = useAuth();
@@ -214,6 +214,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Lecturers Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('lecturers')}
@@ -247,6 +248,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Students Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('students')}
@@ -329,6 +331,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Lecturers Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('lecturers')}
@@ -362,6 +365,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Students Section */}
             <div className="mb-6">
               <div 
                 onClick={() => toggleSection('students')}

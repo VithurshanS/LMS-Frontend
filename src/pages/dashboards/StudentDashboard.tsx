@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { DashboardLayout, ModuleCard, EmptyState, ModuleDetailModal } from '../../components';
+import DashboardLayout from '../../components/layout/DashboardLayout';
+import ModuleCard from '../../components/features/modules/ModuleCard';
+import EmptyState from '../../components/common/EmptyState';
+import ModuleDetailModal from '../../components/features/modules/ModuleDetailModal';
 import { Module, Department } from '../../types';
 import { getModulebyStudentId, getDeptModuleDetails, getDepartmentById, enrolltoModule } from '../../api/services';
 
