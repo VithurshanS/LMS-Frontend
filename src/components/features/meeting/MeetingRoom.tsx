@@ -92,6 +92,7 @@ export default function MeetingRoom({
               enableLiveStreaming: false,
               enableKickParticipants: false,
               enableMuteAll: false,
+              enableVideoMute: false,
             }),
           },
           interfaceConfigOverwrite: {
@@ -101,9 +102,9 @@ export default function MeetingRoom({
               'settings', 'raisehand', 'videoquality', 'filmstrip',
               'participants-pane', 'tileview'
             ] : [
-              'microphone', 'camera', 'fullscreen',
+              'microphone', 'fullscreen',
               'fodeviceselection', 'hangup', 'chat',
-              'settings', 'raisehand', 'filmstrip', 'tileview'
+              'settings', 'raisehand', 'filmstrip'
             ],
             DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
             SHOW_JITSI_WATERMARK: false,

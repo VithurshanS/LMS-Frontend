@@ -301,7 +301,6 @@ export default function ModuleDetailModal({
             </InfoCard>
           )}
 
-          {/* Meeting Button */}
           {onJoinMeeting && hasLecturer && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <button
@@ -312,7 +311,7 @@ export default function ModuleDetailModal({
                     : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
-                🎥 {currentUser?.role === 'LECTURER' ? 'Start Meeting' : 'Join Meeting'}
+                {currentUser?.role === 'LECTURER' ? 'Start Meeting' : 'Join Meeting'}
               </button>
             </div>
           )}
